@@ -1,0 +1,19 @@
+{
+  "name": "finflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "App de control financiero personal con previsión de saldo",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev:api": "pnpm --filter @finflow/api dev",
+    "dev:web": "pnpm --filter @finflow/web dev",
+    "dev:worker": "pnpm --filter @finflow/worker dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=8"
+  }
+}

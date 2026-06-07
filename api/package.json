@@ -1,0 +1,11 @@
+{
+  "name": "@finflow/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"TODO: añadir tsx watch en el Paso 4\" && exit 0",
+    "build": "echo \"TODO: añadir tsc/tsup en el Paso 4\" && exit 0",
+    "typecheck": "echo \"TODO\" && exit 0"
+  }
+}
