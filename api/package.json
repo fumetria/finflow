@@ -4,8 +4,25 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "echo \"TODO: añadir tsx watch en el Paso 4\" && exit 0",
-    "build": "echo \"TODO: añadir tsc/tsup en el Paso 4\" && exit 0",
-    "typecheck": "echo \"TODO\" && exit 0"
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "postgres": "^3.4.9",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.2",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
   }
 }

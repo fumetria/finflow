@@ -1,0 +1,19 @@
+import express from 'express';
+import { env } from './config/env.js';
+import { db } from './db/index.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+import { sql } from 'drizzle-orm';
+
+const app = express();
+app.use(express.json());
+
+app.get('/health', async (_req, res) => {
+    await db.execute(sql`SELECT 1`);
+    res.json({ status: 'ok', db: 'connected' })
+})
+
+app.use(errorHandler);
+
+app.listen(env.API_PORT, () => {
+    console.log(`API running on port ${env.API_PORT}`);
+})
