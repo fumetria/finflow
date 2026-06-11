@@ -38,3 +38,5 @@ coverage/
 # pnpm
 .pnpm-store/
 .pnpm-debug.log*
+
+extra/
