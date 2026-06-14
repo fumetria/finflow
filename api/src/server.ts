@@ -4,10 +4,12 @@ import { db } from './db/index.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { sql } from 'drizzle-orm';
 import authRouter from './routes/auth/auth.router.js';
+import accountsRouter from './routes/accounts/accounts.router.js'
 
 const app = express();
 app.use(express.json());
 app.use('/api/v1/auth', authRouter)
+app.use('/api/v1/accounts', accountsRouter)
 
 app.get('/health', async (_req, res) => {
     await db.execute(sql`SELECT 1`);
