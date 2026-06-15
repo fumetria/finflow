@@ -1,3 +1,3 @@
 export default function Accounts() {
-    return <div>Accounts page</div>
+  return <div>Accounts page</div>;
 }
