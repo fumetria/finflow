@@ -6,12 +6,14 @@ import { sql } from 'drizzle-orm';
 import authRouter from './routes/auth/auth.router.js';
 import accountsRouter from './routes/accounts/accounts.router.js';
 import expenseRouter from './routes/expenses/expenses.router.js';
+import recurringRulesRouter from './routes/recurring_rules/recurringRules.router.js';
 
 const app = express();
 app.use(express.json());
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/accounts', accountsRouter);
 app.use('/api/v1/expenses', expenseRouter);
+app.use('/api/v1/recurring-rules', recurringRulesRouter);
 
 app.get('/health', async (_req, res) => {
   await db.execute(sql`SELECT 1`);
