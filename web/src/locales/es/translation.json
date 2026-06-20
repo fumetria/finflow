@@ -22,5 +22,7 @@
   "Auth_teaser_label": "Proyección al 30 jun",
   "Auth_teaser_covered": "cubierto",
   "Auth_teaser_detail": "12.295 € disponibles · 1.629 € en 9 pagos pendientes",
-  "Login_footer": "© 2026 finflow · Tus datos, cifrados de extremo a extremo."
+  "Login_footer": "© 2026 finflow · Tus datos, cifrados de extremo a extremo.",
+  "Email invalid": "El correo electrónico no es válido",
+  "Password is too short": "La contraseña es demasiado corta"
 }

@@ -77,7 +77,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex flex-1 items-center">
-          <div className="mx-auto w-full max-w-[380px]">
+          <div className="mx-auto w-full max-w-95">
             <div className="mb-7">
               <h1 className="text-[26px] font-semibold tracking-tight">
                 {t(isLogin ? 'Login_welcome' : 'Register_welcome')}
@@ -99,7 +99,7 @@ export default function LoginPage() {
                   icon={<HugeiconsIcon icon={Mail01Icon} size={18} strokeWidth={1.8} />}
                   {...register('email')}
                 />
-                {errors.email && <p className="text-[12px] text-expense">{errors.email.message}</p>}
+                {errors.email && <p className="text-[12px] text-expense">{t(errors.email.message!)}</p>}
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -124,7 +124,7 @@ export default function LoginPage() {
                   {...register('password')}
                 />
                 {errors.password && (
-                  <p className="text-[12px] text-expense">{errors.password.message}</p>
+                  <p className="text-[12px] text-expense">{t(errors.password.message!)}</p>
                 )}
               </div>
 

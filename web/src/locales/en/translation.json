@@ -22,5 +22,7 @@
   "Auth_teaser_label": "Projection to Jun 30",
   "Auth_teaser_covered": "covered",
   "Auth_teaser_detail": "€12,295 available · €1,629 in 9 pending payments",
-  "Login_footer": "© 2026 finflow · Your data, end to end encrypted."
+  "Login_footer": "© 2026 finflow · Your data, end to end encrypted.",
+  "Email invalid": "Email invalid",
+  "Password is too short": "Password is too short"
 }
