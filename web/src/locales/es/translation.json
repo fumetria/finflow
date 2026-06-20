@@ -1,1 +1,26 @@
-{}
+{
+  "Login_welcome": "Bienvenido de nuevo",
+  "Login_subtitle": "Entra para ver tu proyección del mes",
+  "Register_welcome": "Crea tu cuenta",
+  "Register_subtitle": "Empieza a proyectar tu balance en minutos",
+  "Login": "Entrar",
+  "Register_submit": "Crear cuenta",
+  "Email": "Correo electrónico",
+  "Email_placeholder": "tucorreo@email.com",
+  "Password": "Contraseña",
+  "Forgot your password?": "¿Olvidaste tu contraseña?",
+  "or": "o",
+  "Continue with Google": "Continuar con Google",
+  "Don't have an account?": "¿No tienes una cuenta?",
+  "Sign up": "Regístrate",
+  "Already have an account?": "¿Ya tienes una cuenta?",
+  "Sign in": "Inicia sesión",
+  "Auth_error": "No hemos podido completar la operación. Inténtalo de nuevo.",
+  "Auth_badge": "Proyección en vivo",
+  "Auth_headline": "¿Cuánto te falta para cubrir los pagos del mes?",
+  "Auth_subcopy": "finflow suma tu balance disponible y los ingresos esperados, resta los gastos pendientes y te da la respuesta en un número.",
+  "Auth_teaser_label": "Proyección al 30 jun",
+  "Auth_teaser_covered": "cubierto",
+  "Auth_teaser_detail": "12.295 € disponibles · 1.629 € en 9 pagos pendientes",
+  "Login_footer": "© 2026 finflow · Tus datos, cifrados de extremo a extremo."
+}

@@ -1,1 +1,26 @@
-{}
+{
+  "Login_welcome": "Welcome back",
+  "Login_subtitle": "Sign in to view your monthly projection",
+  "Register_welcome": "Create your account",
+  "Register_subtitle": "Start projecting your balance in minutes",
+  "Login": "Sign In",
+  "Register_submit": "Create account",
+  "Email": "Email",
+  "Email_placeholder": "you@email.com",
+  "Password": "Password",
+  "Forgot your password?": "Forgot your password?",
+  "or": "or",
+  "Continue with Google": "Continue with Google",
+  "Don't have an account?": "Don't have an account?",
+  "Sign up": "Sign up",
+  "Already have an account?": "Already have an account?",
+  "Sign in": "Sign in",
+  "Auth_error": "We couldn't complete the request. Please try again.",
+  "Auth_badge": "Live projection",
+  "Auth_headline": "How much do you need to cover this month's payments?",
+  "Auth_subcopy": "finflow adds your available balance and expected income, subtracts pending expenses and gives you the answer in a single number.",
+  "Auth_teaser_label": "Projection to Jun 30",
+  "Auth_teaser_covered": "covered",
+  "Auth_teaser_detail": "€12,295 available · €1,629 in 9 pending payments",
+  "Login_footer": "© 2026 finflow · Your data, end to end encrypted."
+}

@@ -6,7 +6,14 @@ import type { AuthUser } from './AuthContext';
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => {
     const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
+    if (!stored || stored === 'undefined') return null;
+    try {
+      return JSON.parse(stored) as AuthUser;
+    } catch {
+      // Corrupt/legacy value — drop it so the app can boot.
+      localStorage.removeItem('user');
+      return null;
+    }
   });
 
   function login(token: string, user: AuthUser) {
