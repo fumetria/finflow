@@ -15,39 +15,43 @@ const MONTHS_PER_STEP: Record<string, number> = {
 };
 
 function lastDayOfMonth(year: number, month: number) {
-  return new Date(year, month + 1, 0).getDate();
+  return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
 }
 
 // Date-only key (ignoring time) to compare existing vs. computed occurrences.
 function dateKey(date: Date) {
-  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  return `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`;
 }
 
 type RecurringRuleRow = typeof recurringRules.$inferSelect;
 
-// Compute the due dates a rule produces within [from, to] (both at midnight).
+// Compute the due dates a rule produces within [from, to].
+// All math is done in UTC so dueDate is a timezone-independent calendar date
+// (stored as YYYY-MM-DDT00:00:00.000Z), not shifted by the server's local offset.
 function computeDueDates(rule: RecurringRuleRow, from: Date, to: Date): Date[] {
   if (!rule.startDate) return [];
   const start = new Date(rule.startDate);
   const result: Date[] = [];
 
   if (rule.frequency === 'weekly') {
-    const cursor = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const cursor = new Date(
+      Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()),
+    );
     while (cursor <= to) {
       if (cursor >= from) result.push(new Date(cursor));
-      cursor.setDate(cursor.getDate() + 7);
+      cursor.setUTCDate(cursor.getUTCDate() + 7);
     }
     return result;
   }
 
   const step = MONTHS_PER_STEP[rule.frequency];
   if (!step) return [];
-  const day = rule.dayOfMonth ?? start.getDate();
-  let year = start.getFullYear();
-  let month = start.getMonth();
+  const day = rule.dayOfMonth ?? start.getUTCDate();
+  let year = start.getUTCFullYear();
+  let month = start.getUTCMonth();
 
   while (true) {
-    const occ = new Date(year, month, Math.min(day, lastDayOfMonth(year, month)));
+    const occ = new Date(Date.UTC(year, month, Math.min(day, lastDayOfMonth(year, month))));
     if (occ > to) break;
     if (occ >= from) result.push(occ);
     month += step;
@@ -125,8 +129,10 @@ export async function updateRecurringRule(userId: string, id: string, data: Upda
 
 export async function generateRecurringExpenses(userId: string) {
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const horizon = new Date(now.getFullYear(), now.getMonth() + GENERATION_HORIZON_MONTHS, now.getDate());
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const horizon = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + GENERATION_HORIZON_MONTHS, now.getUTCDate()),
+  );
 
   const rules = await db
     .select()

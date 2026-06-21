@@ -6,8 +6,8 @@ import { accounts, expenses, db } from '../../db/index.js';
 export async function getForecast(userId: string, dateStr?: string) {
   const now = new Date();
   const targetDate = dateStr
-    ? new Date(`${dateStr}T23:59:59.999`)
-    : new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    ? new Date(`${dateStr}T23:59:59.999Z`)
+    : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
 
   const userAccounts = await db
     .select()
