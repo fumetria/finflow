@@ -24,5 +24,18 @@
   "Auth_teaser_detail": "€12,295 available · €1,629 in 9 pending payments",
   "Login_footer": "© 2026 finflow · Your data, end to end encrypted.",
   "Email invalid": "Email invalid",
-  "Password is too short": "Password is too short"
+  "Password is too short": "Password is too short",
+  "Nav_section_general": "General",
+  "Nav_section_soon": "Coming soon",
+  "Nav_soon_badge": "Soon",
+  "Nav_new_expense": "New expense",
+  "Nav_dashboard": "Dashboard",
+  "Nav_accounts": "Accounts",
+  "Nav_expenses": "Expenses",
+  "Nav_recurring": "Recurring",
+  "Nav_loans": "Loans",
+  "Topbar_search": "Search…",
+  "Topbar_theme_light": "Light mode",
+  "Topbar_theme_dark": "Dark mode",
+  "Sidebar_logout": "Log out"
 }

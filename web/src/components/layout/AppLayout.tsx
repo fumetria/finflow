@@ -1,23 +1,18 @@
-import { NavLink, Outlet } from 'react-router';
+import { Outlet } from 'react-router';
+
+import Sidebar from './Sidebar';
+import Topbar from './Topbar';
 
 export default function AppLayout() {
   return (
-    <>
-      <div className="grid grid-cols-[auto_1fr]">
-        <header>
-          <div>
-            <h1 className="text-red">FinFlow</h1>
-          </div>
-          <nav className="flex flex-col justify-start items-center">
-            <NavLink to={'/dashboard'}>Dashboard</NavLink>
-            <NavLink to={'/accounts'}>Accounts</NavLink>
-            <NavLink to={'/expenses'}>Expenses</NavLink>
-          </nav>
-        </header>
-        <main>
-          <Outlet></Outlet>
+    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+      <Sidebar />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <Topbar />
+        <main className="flex-1 overflow-y-auto">
+          <Outlet />
         </main>
       </div>
-    </>
+    </div>
   );
 }

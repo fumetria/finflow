@@ -24,5 +24,18 @@
   "Auth_teaser_detail": "12.295 € disponibles · 1.629 € en 9 pagos pendientes",
   "Login_footer": "© 2026 finflow · Tus datos, cifrados de extremo a extremo.",
   "Email invalid": "El correo electrónico no es válido",
-  "Password is too short": "La contraseña es demasiado corta"
+  "Password is too short": "La contraseña es demasiado corta",
+  "Nav_section_general": "General",
+  "Nav_section_soon": "Próximamente",
+  "Nav_soon_badge": "Pronto",
+  "Nav_new_expense": "Nuevo gasto",
+  "Nav_dashboard": "Dashboard",
+  "Nav_accounts": "Cuentas",
+  "Nav_expenses": "Gastos",
+  "Nav_recurring": "Recurrentes",
+  "Nav_loans": "Préstamos",
+  "Topbar_search": "Buscar…",
+  "Topbar_theme_light": "Modo claro",
+  "Topbar_theme_dark": "Modo oscuro",
+  "Sidebar_logout": "Salir"
 }
