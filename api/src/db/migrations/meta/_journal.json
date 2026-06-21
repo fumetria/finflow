@@ -8,6 +8,13 @@
       "when": 1781556918938,
       "tag": "0000_useful_garia",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782082890437,
+      "tag": "0001_neat_firelord",
+      "breakpoints": true
     }
   ]
 }
