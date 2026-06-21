@@ -6,6 +6,7 @@ import {
   createRecurringRule,
   updateRecurringRule,
   deleteRecurringRule,
+  generateRecurringExpenses,
 } from './recurringRules.service.js';
 import {
   createRecurringRuleSchema,
@@ -30,6 +31,15 @@ router.post('/', async (req, res, next) => {
     const body = createRecurringRuleSchema.parse(req.body);
     const newRecurringRule = await createRecurringRule(req.user.sub, body);
     return res.status(201).json({ newRecurringRule });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/generate', async (req, res, next) => {
+  try {
+    const result = await generateRecurringExpenses(req.user.sub);
+    return res.status(201).json(result);
   } catch (error) {
     next(error);
   }
