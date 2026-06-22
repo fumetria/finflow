@@ -233,4 +233,9 @@ body {
   html {
     @apply font-sans;
   }
+  /* Native <select> popups inherit the control's translucent background, which
+     leaves option text unreadable in dark mode. Give options an opaque surface. */
+  option {
+    @apply bg-popover text-popover-foreground;
+  }
 }
