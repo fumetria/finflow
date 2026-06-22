@@ -8,6 +8,7 @@ import accountsRouter from './routes/accounts/accounts.router.js';
 import expenseRouter from './routes/expenses/expenses.router.js';
 import recurringRulesRouter from './routes/recurring_rules/recurringRules.router.js';
 import forecastRouter from './routes/forecast/forecast.router.js';
+import loansRouter from './routes/loans/loans.router.js';
 import cors from 'cors';
 
 const app = express();
@@ -23,6 +24,7 @@ app.use('/api/v1/accounts', accountsRouter);
 app.use('/api/v1/expenses', expenseRouter);
 app.use('/api/v1/recurring-rules', recurringRulesRouter);
 app.use('/api/v1/forecast', forecastRouter);
+app.use('/api/v1/loans', loansRouter);
 
 app.get('/health', async (_req, res) => {
   await db.execute(sql`SELECT 1`);
