@@ -1,8 +1,12 @@
-import { db, loans, loanInstallments } from '../../db/index.js';
+import { db, loans, loanInstallments, expenses } from '../../db/index.js';
 import { buildAmortizationSchedule } from './loans.amortization.js';
 import type { CreateLoan } from './loans.schema.js';
-import { eq, and, asc } from 'drizzle-orm';
+import { eq, and, asc, lte, isNull } from 'drizzle-orm';
 import { AppError } from '../../middlewares/errorHandler.js';
+
+// Materialization horizon: how many months ahead from today an installment's
+// due date may be to become an expense. Mirrors recurring_rules generate.
+const MATERIALIZATION_HORIZON_MONTHS = 3;
 
 export async function findAllLoans(userId: string) {
   const userLoans = await db.select().from(loans).where(eq(loans.userId, userId));
@@ -74,4 +78,72 @@ export async function createLoan(userId: string, data: CreateLoan) {
 
     return { loan, installments };
   });
+}
+
+// Materialize loan installments into expenses, idempotently.
+//
+// For every active loan, each installment whose due date is within the horizon
+// (today + N months, no lower bound — overdue installments are included) and is
+// not yet linked to an expense becomes a pending expense; the installment then
+// stores its expenseId so a second run skips it. Runs in a transaction.
+export async function materializeLoanInstallments(userId: string) {
+  const now = new Date();
+  const horizon = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth() + MATERIALIZATION_HORIZON_MONTHS,
+      now.getUTCDate(),
+      23,
+      59,
+      59,
+      999,
+    ),
+  );
+
+  const activeLoans = await db
+    .select()
+    .from(loans)
+    .where(and(eq(loans.userId, userId), eq(loans.status, 'active')));
+
+  let materialized = 0;
+
+  await db.transaction(async (tx) => {
+    for (const loan of activeLoans) {
+      const pending = await tx
+        .select()
+        .from(loanInstallments)
+        .where(
+          and(
+            eq(loanInstallments.userId, userId),
+            eq(loanInstallments.loanId, loan.id),
+            isNull(loanInstallments.expenseId),
+            lte(loanInstallments.dueDate, horizon),
+          ),
+        )
+        .orderBy(asc(loanInstallments.number));
+
+      for (const installment of pending) {
+        const [expense] = await tx
+          .insert(expenses)
+          .values({
+            userId,
+            accountId: loan.accountId,
+            entityId: loan.entityId,
+            concept: `${loan.concept} (cuota ${installment.number}/${loan.termMonths})`,
+            amount: installment.amount,
+            dueDate: installment.dueDate,
+          })
+          .returning();
+
+        await tx
+          .update(loanInstallments)
+          .set({ expenseId: expense!.id })
+          .where(eq(loanInstallments.id, installment.id));
+
+        materialized += 1;
+      }
+    }
+  });
+
+  return { materialized };
 }

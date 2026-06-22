@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import authtenticate from '../../middlewares/authtenticate.js';
-import { createLoan, findAllLoans, findLoanById } from './loans.service.js';
+import {
+  createLoan,
+  findAllLoans,
+  findLoanById,
+  materializeLoanInstallments,
+} from './loans.service.js';
 import { createLoanSchema } from './loans.schema.js';
 
 const router = Router();
@@ -21,6 +26,15 @@ router.post('/', async (req, res, next) => {
     const body = createLoanSchema.parse(req.body);
     const newLoan = await createLoan(req.user.sub, body);
     return res.status(201).json(newLoan);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/materialize', async (req, res, next) => {
+  try {
+    const result = await materializeLoanInstallments(req.user.sub);
+    return res.status(201).json(result);
   } catch (error) {
     next(error);
   }
