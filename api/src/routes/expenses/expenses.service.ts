@@ -1,5 +1,5 @@
-import { expenses, db, accounts } from '../../db/index.js';
-import { eq, and } from 'drizzle-orm';
+import { expenses, db, accounts, loanInstallments, loans } from '../../db/index.js';
+import { eq, and, ne } from 'drizzle-orm';
 import { AppError } from '../../middlewares/errorHandler.js';
 import type { CreateExpense, UpdateExpense, MarkAsPaid } from './expenses.schemas.js';
 
@@ -68,6 +68,36 @@ export async function markAsPaid(userId: string, id: string, data: MarkAsPaid) {
       .update(expenses)
       .set({ status: 'paid', paidAt: data.paidAt ? new Date(data.paidAt) : new Date() })
       .where(and(eq(expenses.userId, userId), eq(expenses.id, id)));
+
+    // Keep the loan installment in sync when this expense materializes one.
+    // No-op (empty result) for regular expenses not linked to an installment.
+    const [paidInstallment] = await tx
+      .update(loanInstallments)
+      .set({ status: 'paid' })
+      .where(and(eq(loanInstallments.userId, userId), eq(loanInstallments.expenseId, id)))
+      .returning({ loanId: loanInstallments.loanId });
+
+    // Close the loan automatically once it has no pending installments left.
+    if (paidInstallment) {
+      const [stillPending] = await tx
+        .select({ id: loanInstallments.id })
+        .from(loanInstallments)
+        .where(
+          and(
+            eq(loanInstallments.userId, userId),
+            eq(loanInstallments.loanId, paidInstallment.loanId),
+            ne(loanInstallments.status, 'paid'),
+          ),
+        )
+        .limit(1);
+
+      if (!stillPending) {
+        await tx
+          .update(loans)
+          .set({ status: 'paid' })
+          .where(and(eq(loans.userId, userId), eq(loans.id, paidInstallment.loanId)));
+      }
+    }
 
     const newBalance = Number(selectedAccount?.currentBalance) - Number(selectedExpense?.amount);
     await tx
