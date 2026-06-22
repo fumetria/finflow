@@ -29,9 +29,17 @@ const schema = z.object({
   // Metrics
   WORKER_METRICS_PORT: z.coerce.number().default(9100),
 
-  // Mailhog / SMTP
+  // SMTP — defaults target Mailhog (no auth/TLS). Set SMTP_USER + SMTP_PASS
+  // to talk to a real provider (e.g. IONOS); auth + TLS turn on automatically.
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: z.coerce.number().default(1025),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  // Override TLS explicitly; when unset we infer it from the port (465 = SSL).
+  SMTP_SECURE: z
+    .string()
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v.toLowerCase() === 'true')),
   MAIL_FROM: z.string().default('finflow@example.com'),
 });
 
