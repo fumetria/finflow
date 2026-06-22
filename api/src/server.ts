@@ -9,6 +9,7 @@ import expenseRouter from './routes/expenses/expenses.router.js';
 import recurringRulesRouter from './routes/recurring_rules/recurringRules.router.js';
 import forecastRouter from './routes/forecast/forecast.router.js';
 import loansRouter from './routes/loans/loans.router.js';
+import { metricsMiddleware, metricsHandler } from './metrics.js';
 import cors from 'cors';
 
 const app = express();
@@ -19,6 +20,8 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+app.use(metricsMiddleware);
+app.get('/metrics', metricsHandler);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/accounts', accountsRouter);
 app.use('/api/v1/expenses', expenseRouter);

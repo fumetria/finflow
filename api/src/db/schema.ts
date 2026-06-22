@@ -78,6 +78,7 @@ export const expenses = pgTable('expenses', {
   dueDate: timestamp('due_date').notNull(),
   status: expenseStatusEnum('status').notNull().default('pending'),
   paidAt: timestamp('paid_at'),
+  dueSoonNotifiedAt: timestamp('due_soon_notified_at'),
   notes: text('notes'),
   recurringRuleId: uuid('recurring_rule_id').references(() => recurringRules.id, {
     onDelete: 'set null',

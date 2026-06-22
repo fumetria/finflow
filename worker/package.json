@@ -4,8 +4,27 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "echo \"TODO: añadir tsx watch en el Paso 4\" && exit 0",
-    "build": "echo \"TODO: añadir tsc/tsup en el Paso 4\" && exit 0",
-    "typecheck": "echo \"TODO\" && exit 0"
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@finflow/api": "workspace:*",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "kafkajs": "^2.2.4",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.16",
+    "postgres": "^3.4.9",
+    "prom-client": "^15.1.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^6.4.17",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
   }
 }

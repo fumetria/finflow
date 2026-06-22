@@ -1,0 +1,1 @@
+ALTER TABLE "expenses" ADD COLUMN "due_soon_notified_at" timestamp;
