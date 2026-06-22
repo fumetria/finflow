@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router';
+import { NavLink, useNavigate, Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
@@ -30,9 +30,6 @@ const NAV: NavEntry[] = [
   { to: '/dashboard', labelKey: 'Nav_dashboard', icon: DashboardSquare01Icon },
   { to: '/accounts', labelKey: 'Nav_accounts', icon: Wallet01Icon },
   { to: '/expenses', labelKey: 'Nav_expenses', icon: ReceiptTextIcon },
-];
-
-const NAV_SOON: NavEntry[] = [
   { to: '/recurring', labelKey: 'Nav_recurring', icon: RepeatIcon },
   { to: '/loans', labelKey: 'Nav_loans', icon: BankIcon },
 ];
@@ -68,19 +65,6 @@ function NavItem({ entry }: { entry: NavEntry }) {
   );
 }
 
-function NavItemSoon({ entry }: { entry: NavEntry }) {
-  const { t } = useTranslation();
-  return (
-    <span className="group relative flex cursor-default items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground/60">
-      <HugeiconsIcon icon={entry.icon} size={18} />
-      {t(entry.labelKey)}
-      <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {t('Nav_soon_badge')}
-      </span>
-    </span>
-  );
-}
-
 export default function Sidebar() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
@@ -103,10 +87,11 @@ export default function Sidebar() {
       </div>
 
       <div className="px-3 pt-2">
-        {/* TODO: open the "new expense" modal once ExpenseForm exists (later phase). */}
-        <Button className="w-full justify-start" onClick={() => {}}>
-          <HugeiconsIcon icon={PlusSignIcon} size={16} />
-          {t('Nav_new_expense')}
+        <Button asChild className="w-full justify-start">
+          <Link to="/expenses?new=1">
+            <HugeiconsIcon icon={PlusSignIcon} size={16} />
+            {t('Nav_new_expense')}
+          </Link>
         </Button>
       </div>
 
@@ -116,13 +101,6 @@ export default function Sidebar() {
         </p>
         {NAV.map((entry) => (
           <NavItem key={entry.to} entry={entry} />
-        ))}
-
-        <p className="px-3 pb-1 pt-4 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          {t('Nav_section_soon')}
-        </p>
-        {NAV_SOON.map((entry) => (
-          <NavItemSoon key={entry.to} entry={entry} />
         ))}
       </nav>
 

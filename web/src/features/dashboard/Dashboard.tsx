@@ -7,6 +7,7 @@ import { Wallet01Icon, Alert02Icon, CheckmarkCircle02Icon } from '@hugeicons/cor
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useCurrencyFormatter } from '@/lib/currency';
 import { fetchForecast, type AccountForecast, type ForecastResponse } from './forecast';
 
 function toInputValue(d: Date): string {
@@ -34,49 +35,39 @@ const PRESETS = [
   { labelKey: 'Dashboard_preset_3m', value: () => endOfMonth(3) },
 ] as const;
 
-function useCurrencyFormatter() {
-  const { i18n } = useTranslation();
-  return useMemo(() => {
-    const cache = new Map<string, Intl.NumberFormat>();
-    return (amount: string, currency: string) => {
-      let fmt = cache.get(currency);
-      if (!fmt) {
-        fmt = new Intl.NumberFormat(i18n.language, { style: 'currency', currency });
-        cache.set(currency, fmt);
-      }
-      return fmt.format(Number(amount));
-    };
-  }, [i18n.language]);
-}
-
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const formatCurrency = useCurrencyFormatter();
 
   const [date, setDate] = useState(() => endOfMonth(0));
   const [reloadKey, setReloadKey] = useState(0);
-  const [data, setData] = useState<ForecastResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [result, setResult] = useState<{
+    key: string;
+    data: ForecastResponse | null;
+    error: boolean;
+  }>({ key: '', data: null, error: false });
+
+  // Identifies the request the effect should serve; changes on a new date or a
+  // retry. `loading` is derived from it so we never setState in the effect body.
+  const requestKey = `${date}:${reloadKey}`;
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(false);
     fetchForecast(date)
       .then((res) => {
-        if (!cancelled) setData(res);
+        if (!cancelled) setResult({ key: requestKey, data: res, error: false });
       })
       .catch(() => {
-        if (!cancelled) setError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setResult({ key: requestKey, data: null, error: true });
       });
     return () => {
       cancelled = true;
     };
-  }, [date, reloadKey]);
+  }, [requestKey, date]);
+
+  const loading = result.key !== requestKey;
+  const error = !loading && result.error;
+  const data = loading ? null : result.data;
 
   const formattedDate = useMemo(
     () =>
