@@ -68,6 +68,13 @@ export async function createLoan(input: LoanInput): Promise<string> {
   return data.loan.id;
 }
 
+// PATCH /loans/:id — change the account the loan is charged to. Re-points
+// already-materialized pending expenses to the new account server-side.
+export async function updateLoanAccount(id: string, accountId: string): Promise<Loan> {
+  const { data } = await api.patch<{ loan: Loan }>(`/loans/${id}`, { accountId });
+  return data.loan;
+}
+
 // POST /loans/materialize — turn upcoming installments into pending expenses.
 export async function materializeLoans(): Promise<{ materialized: number }> {
   const { data } = await api.post<{ materialized: number }>('/loans/materialize', {});

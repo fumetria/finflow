@@ -5,8 +5,9 @@ import {
   findAllLoans,
   findLoanById,
   materializeLoanInstallments,
+  updateLoanAccount,
 } from './loans.service.js';
-import { createLoanSchema } from './loans.schema.js';
+import { createLoanSchema, updateLoanAccountSchema } from './loans.schema.js';
 
 const router = Router();
 
@@ -44,6 +45,16 @@ router.get('/:id', async (req, res, next) => {
   try {
     const selectedLoan = await findLoanById(req.user.sub, req.params.id);
     return res.status(200).json(selectedLoan);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/:id', async (req, res, next) => {
+  try {
+    const body = updateLoanAccountSchema.parse(req.body);
+    const loan = await updateLoanAccount(req.user.sub, req.params.id, body.accountId);
+    return res.status(200).json({ loan });
   } catch (error) {
     next(error);
   }

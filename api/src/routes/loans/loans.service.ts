@@ -1,7 +1,7 @@
-import { db, loans, loanInstallments, expenses } from '../../db/index.js';
+import { db, loans, loanInstallments, expenses, accounts } from '../../db/index.js';
 import { buildAmortizationSchedule } from './loans.amortization.js';
 import type { CreateLoan } from './loans.schema.js';
-import { eq, and, asc, lte, isNull } from 'drizzle-orm';
+import { eq, and, asc, lte, isNull, inArray, isNotNull } from 'drizzle-orm';
 import { AppError } from '../../middlewares/errorHandler.js';
 
 // Materialization horizon: how many months ahead from today an installment's
@@ -77,6 +77,68 @@ export async function createLoan(userId: string, data: CreateLoan) {
       .returning();
 
     return { loan, installments };
+  });
+}
+
+// Change the account a loan is charged to.
+//
+// Updates the loan's accountId and re-points every already-materialized expense
+// that is still pending to the new account, so the forecast charges the right
+// account going forward. Paid expenses are left untouched (their balance was
+// already deducted from the old account — that's real history). Future
+// materializations need no special handling: they read loan.accountId.
+//
+// A pending expense hasn't deducted any balance yet (deduction happens on
+// mark-as-paid), so no balance recalculation is required. Runs in one
+// transaction. Validates the new account belongs to the user.
+export async function updateLoanAccount(userId: string, id: string, accountId: string) {
+  const [account] = await db
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(and(eq(accounts.userId, userId), eq(accounts.id, accountId)));
+  if (!account) {
+    throw new AppError('ACCOUNT_NOT_FOUND', 'Not found any account with this id', 404);
+  }
+
+  return db.transaction(async (tx) => {
+    const [loan] = await tx
+      .update(loans)
+      .set({ accountId })
+      .where(and(eq(loans.userId, userId), eq(loans.id, id)))
+      .returning();
+    if (!loan) {
+      throw new AppError('LOAN_NOT_FOUND', 'Not found any loan with this id', 404);
+    }
+
+    // Expense ids linked to this loan's installments (materialized cuotas).
+    const linked = await tx
+      .select({ expenseId: loanInstallments.expenseId })
+      .from(loanInstallments)
+      .where(
+        and(
+          eq(loanInstallments.userId, userId),
+          eq(loanInstallments.loanId, id),
+          isNotNull(loanInstallments.expenseId),
+        ),
+      );
+    const expenseIds = linked
+      .map((row) => row.expenseId)
+      .filter((expenseId): expenseId is string => expenseId !== null);
+
+    if (expenseIds.length > 0) {
+      await tx
+        .update(expenses)
+        .set({ accountId })
+        .where(
+          and(
+            eq(expenses.userId, userId),
+            inArray(expenses.id, expenseIds),
+            eq(expenses.status, 'pending'),
+          ),
+        );
+    }
+
+    return loan;
   });
 }
 

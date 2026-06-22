@@ -6,6 +6,7 @@ import { ArrowLeft01Icon, CheckmarkCircle02Icon } from '@hugeicons/core-free-ico
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -17,7 +18,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useCurrencyFormatter } from '@/lib/currency';
 import { fetchAccounts, type Account } from '@/features/accounts/accounts.api';
-import { fetchLoan, type LoanDetail as LoanDetailData } from './loans.api';
+import { fetchLoan, updateLoanAccount, type LoanDetail as LoanDetailData } from './loans.api';
 
 // Remount the view when the loan id changes so its data-loading effect starts
 // from a clean state (no synchronous setState needed inside the effect).
@@ -31,18 +32,19 @@ function LoanDetailView({ id }: { id: string | undefined }) {
   const formatCurrency = useCurrencyFormatter();
 
   const [data, setData] = useState<LoanDetailData | null>(null);
-  const [account, setAccount] = useState<Account | undefined>(undefined);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
     Promise.all([fetchLoan(id), fetchAccounts()])
-      .then(([detail, accounts]) => {
+      .then(([detail, accs]) => {
         if (!cancelled) {
           setData(detail);
-          setAccount(accounts.find((a) => a.id === detail.loan.accountId));
+          setAccounts(accs);
           setError(false);
         }
       })
@@ -57,6 +59,10 @@ function LoanDetailView({ id }: { id: string | undefined }) {
     };
   }, [id]);
 
+  const account = useMemo(
+    () => accounts.find((a) => a.id === data?.loan.accountId),
+    [accounts, data?.loan.accountId],
+  );
   const currency = account?.currency ?? 'EUR';
 
   const dateFmt = useMemo(
@@ -105,8 +111,33 @@ function LoanDetailView({ id }: { id: string | undefined }) {
             <p className="text-sm text-muted-foreground">
               {account?.name ?? t('Loans_account_unknown')} ·{' '}
               {t(`Loans_status_${data.loan.status}`)}
+              {accounts.length > 0 && !editing && (
+                <>
+                  {' · '}
+                  <button
+                    type="button"
+                    onClick={() => setEditing(true)}
+                    className="font-medium text-brand transition-colors hover:text-brand/80"
+                  >
+                    {t('Loans_account_edit_link')}
+                  </button>
+                </>
+              )}
             </p>
           </div>
+
+          {accounts.length > 0 && editing && (
+            <AccountEditor
+              loanId={data.loan.id}
+              accounts={accounts}
+              currentAccountId={data.loan.accountId}
+              onCancel={() => setEditing(false)}
+              onSaved={(accountId) => {
+                setData((prev) => (prev ? { ...prev, loan: { ...prev.loan, accountId } } : prev));
+                setEditing(false);
+              }}
+            />
+          )}
 
           {/* Summary */}
           <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -183,6 +214,72 @@ function LoanDetailView({ id }: { id: string | undefined }) {
             </CardContent>
           </Card>
         </>
+      )}
+    </div>
+  );
+}
+
+function AccountEditor({
+  loanId,
+  accounts,
+  currentAccountId,
+  onSaved,
+  onCancel,
+}: {
+  loanId: string;
+  accounts: Account[];
+  currentAccountId: string;
+  onSaved: (accountId: string) => void;
+  onCancel: () => void;
+}) {
+  const { t } = useTranslation();
+  const [selected, setSelected] = useState(currentAccountId);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
+
+  const dirty = selected !== currentAccountId;
+
+  async function handleSave() {
+    setSaving(true);
+    setError(false);
+    try {
+      const loan = await updateLoanAccount(loanId, selected);
+      onSaved(loan.accountId);
+    } catch {
+      setError(true);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-5 flex flex-wrap items-end gap-3">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="loan-account">{t('Loans_account_edit')}</Label>
+        <select
+          id="loan-account"
+          value={selected}
+          onChange={(e) => {
+            setSelected(e.target.value);
+            setError(false);
+          }}
+          className="h-9 w-64 rounded-md border border-input bg-input/20 px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-input/30"
+        >
+          {accounts.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name} ({a.currency})
+            </option>
+          ))}
+        </select>
+      </div>
+      <Button size="sm" disabled={!dirty || saving} onClick={handleSave}>
+        {t('Loans_account_save')}
+      </Button>
+      <Button size="sm" variant="outline" disabled={saving} onClick={onCancel}>
+        {t('Loans_cancel')}
+      </Button>
+      {error && (
+        <span className="pb-2 text-[12px] font-medium text-expense">{t('Loans_account_error')}</span>
       )}
     </div>
   );

@@ -12,3 +12,9 @@ export const createLoanSchema = z.object({
 });
 
 export type CreateLoan = z.infer<typeof createLoanSchema>;
+
+export const updateLoanAccountSchema = z.object({
+  accountId: z.uuid(),
+});
+
+export type UpdateLoanAccount = z.infer<typeof updateLoanAccountSchema>;
