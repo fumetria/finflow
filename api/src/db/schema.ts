@@ -23,6 +23,8 @@ export const frecuencyEnum = pgEnum('frecuency', [
   'weekly',
   'biannual',
 ]);
+export const loanStatusEnum = pgEnum('loan_status', ['active', 'paid', 'cancelled']);
+export const loanInstallmentStatusEnum = pgEnum('loan_installment_status', ['pending', 'paid']);
 
 // ── Users ────────────────────────────────────────────────────────────────────
 
@@ -102,5 +104,47 @@ export const recurringRules = pgTable('recurring_rules', {
   endDate: timestamp(),
   active: boolean().default(true),
   notes: text(),
+  ...timestamps,
+});
+
+// Loans
+
+export const loans = pgTable('loans', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  accountId: uuid('account_id')
+    .notNull()
+    .references(() => accounts.id),
+  entityId: uuid('entity_id').references(() => entities.id, { onDelete: 'set null' }),
+  concept: varchar('concept', { length: 255 }).notNull(),
+  principal: numeric('principal', { precision: 12, scale: 2 }).notNull(),
+  annualRate: numeric('annual_rate', { precision: 7, scale: 4 }).notNull(),
+  termMonths: integer('term_months').notNull(),
+  startDate: timestamp('start_date').notNull(),
+  status: loanStatusEnum('status').notNull().default('active'),
+  notes: text('notes'),
+  ...timestamps,
+});
+
+// Loan installments (amortization schedule)
+
+export const loanInstallments = pgTable('loan_installments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  loanId: uuid('loan_id')
+    .notNull()
+    .references(() => loans.id, { onDelete: 'cascade' }),
+  number: integer('number').notNull(),
+  dueDate: timestamp('due_date').notNull(),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  principalComponent: numeric('principal_component', { precision: 12, scale: 2 }).notNull(),
+  interestComponent: numeric('interest_component', { precision: 12, scale: 2 }).notNull(),
+  remainingBalance: numeric('remaining_balance', { precision: 12, scale: 2 }).notNull(),
+  status: loanInstallmentStatusEnum('status').notNull().default('pending'),
+  expenseId: uuid('expense_id').references(() => expenses.id, { onDelete: 'set null' }),
   ...timestamps,
 });

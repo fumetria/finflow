@@ -15,6 +15,13 @@
       "when": 1782082890437,
       "tag": "0001_neat_firelord",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782124678425,
+      "tag": "0002_heavy_omega_red",
+      "breakpoints": true
     }
   ]
 }
