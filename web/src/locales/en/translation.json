@@ -238,5 +238,6 @@
   "Topbar_search": "Search…",
   "Topbar_theme_light": "Light mode",
   "Topbar_theme_dark": "Dark mode",
+  "Topbar_theme_system": "System",
   "Sidebar_logout": "Log out"
 }

@@ -10,6 +10,7 @@ import {
   PlusSignIcon,
   Sun01Icon,
   Moon02Icon,
+  ComputerDesk01Icon,
   Logout01Icon,
 } from '@hugeicons/core-free-icons';
 
@@ -68,7 +69,7 @@ function NavItem({ entry }: { entry: NavEntry }) {
 export default function Sidebar() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
   const email = user?.email ?? '';
@@ -105,17 +106,28 @@ export default function Sidebar() {
       </nav>
 
       <div className="border-t border-border p-3">
-        <div className="flex items-center gap-2 rounded-lg px-2 py-1.5">
-          <button
-            onClick={toggleTheme}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            title={t(isDark ? 'Topbar_theme_dark' : 'Topbar_theme_light')}
-          >
-            <HugeiconsIcon icon={isDark ? Moon02Icon : Sun01Icon} size={17} />
-          </button>
-          <span className="text-xs text-muted-foreground">
-            {t(isDark ? 'Topbar_theme_dark' : 'Topbar_theme_light')}
-          </span>
+        <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
+          {(
+            [
+              { value: 'light', icon: Sun01Icon, labelKey: 'Topbar_theme_light' },
+              { value: 'dark', icon: Moon02Icon, labelKey: 'Topbar_theme_dark' },
+              { value: 'system', icon: ComputerDesk01Icon, labelKey: 'Topbar_theme_system' },
+            ] as const
+          ).map(({ value, icon, labelKey }) => (
+            <button
+              key={value}
+              onClick={() => setTheme(value)}
+              title={t(labelKey)}
+              className={cn(
+                'flex flex-1 items-center justify-center rounded-md py-1 transition-colors',
+                theme === value
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <HugeiconsIcon icon={icon} size={15} />
+            </button>
+          ))}
         </div>
 
         <Separator className="my-2" />
