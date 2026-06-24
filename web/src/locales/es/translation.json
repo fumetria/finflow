@@ -34,8 +34,8 @@
   "Nav_expenses": "Gastos",
   "Nav_recurring": "Recurrentes",
   "Nav_loans": "Préstamos",
-  "Dashboard_title": "Proyección",
-  "Dashboard_subtitle": "Cuánto te queda disponible frente a tus pagos pendientes.",
+  "Dashboard_title": "Panel de control",
+  "Dashboard_header_date": "{{date}} · vista general",
   "Dashboard_date_label": "Proyección a",
   "Dashboard_preset_7d": "7 días",
   "Dashboard_preset_eom": "Fin de mes",
@@ -239,5 +239,7 @@
   "Topbar_theme_light": "Modo claro",
   "Topbar_theme_dark": "Modo oscuro",
   "Topbar_theme_system": "Sistema",
-  "Sidebar_logout": "Salir"
+  "Sidebar_logout": "Salir",
+  "Button_Show_Expenses": "Ver gastos",
+  "Button_New_Expense": "Nuevo gasto"
 }

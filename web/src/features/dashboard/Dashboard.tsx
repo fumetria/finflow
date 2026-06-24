@@ -69,6 +69,17 @@ export default function Dashboard() {
   const error = !loading && result.error;
   const data = loading ? null : result.data;
 
+  const todayLabel = useMemo(() => {
+    const s = new Intl.DateTimeFormat(i18n.language, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    }).format(new Date());
+    // Intl en español devuelve el día en minúscula ("lunes"); el diseño lo
+    // muestra capitalizado.
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }, [i18n.language]);
+
   const formattedDate = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.language, {
@@ -80,13 +91,22 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-7 py-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="font-heading text-xl font-semibold tracking-tight">
-          {t('Dashboard_title')}
-        </h1>
-        <p className="text-sm text-muted-foreground">{t('Dashboard_subtitle')}</p>
-      </div>
+    <div className="mx-auto max-w-7xl px-7 py-6">
+      <section className='flex justify-between items-center'>
+        <div className="flex flex-col gap-1">
+          <h1 className="font-heading text-xl font-semibold tracking-tight">
+            {t('Dashboard_title')}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t('Dashboard_header_date', { date: todayLabel })}
+          </p>
+        </div>
+        <div className='flex '>
+          <Button className='cursor-pointer' >
+            <Link to="/expenses">{t('Button_Show_Expenses')}</Link>
+          </Button>
+        </div>
+      </section>
 
       {/* Date controls */}
       <div className="mt-5 flex flex-wrap items-center gap-2">

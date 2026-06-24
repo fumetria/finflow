@@ -71,8 +71,8 @@
 
   /* Semantic tokens (finflow design handoff). RGB channels so /opacity works. */
   --brand: 13 148 136;
-  --income: 22 163 74;
-  --expense: 220 38 38;
+  --income: oklch(62.7% 0.194 149.214);
+  --expense: oklch(57.7% 0.245 27.325);
   --warning: 217 119 6;
 
   --chart-1: oklch(0.87 0 0);
@@ -103,7 +103,6 @@
 
   --sidebar-ring: oklch(0.708 0 0);
 }
-
 
 #root {
   min-height: 100svh;
