@@ -10,9 +10,17 @@ export type AccountForecast = {
   shortfall: string;
 };
 
+export type ForecastTotals = {
+  currency: string;
+  currentBalance: string;
+  pendingUntilDate: string;
+  projectedBalance: string;
+};
+
 export type ForecastResponse = {
   date: string;
   accounts: AccountForecast[];
+  totals: ForecastTotals;
 };
 
 // GET /forecast?date=YYYY-MM-DD — per-account projected balance vs. pending expenses.

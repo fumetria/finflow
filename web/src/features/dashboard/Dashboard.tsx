@@ -8,7 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useCurrencyFormatter } from '@/lib/currency';
-import { fetchForecast, type AccountForecast, type ForecastResponse } from './forecast';
+import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
+
+import {
+  fetchForecast,
+  type AccountForecast,
+  type ForecastResponse,
+  type ForecastTotals,
+} from './forecast';
 
 function toInputValue(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -148,6 +155,10 @@ export default function Dashboard() {
             <p className="mb-3 text-xs text-muted-foreground">
               {t('Dashboard_projected_to', { date: formattedDate })}
             </p>
+            <div className="mb-6 grid gap-4 lg:grid-cols-2">
+              <CompositionCard totals={data.totals} formatCurrency={formatCurrency} />
+              <CategoryPieCard formatCurrency={formatCurrency} currency={data.totals.currency} />
+            </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {data.accounts.map((account) => (
                 <AccountCard
@@ -232,10 +243,168 @@ function AccountCard({
   );
 }
 
+// Aggregated breakdown of the whole projection (mirrors the design handoff's
+// "Composición" card). Updates with the selected projection date via `totals`.
+function CompositionCard({
+  totals,
+  formatCurrency,
+}: {
+  totals: ForecastTotals;
+  formatCurrency: (amount: string, currency: string) => string;
+}) {
+  const { t } = useTranslation();
+  const negative = Number(totals.projectedBalance) < 0;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('Dashboard_composition_title')}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2.5">
+        <BreakRow
+          label={t('Dashboard_available_balance')}
+          value={formatCurrency(totals.currentBalance, totals.currency)}
+        />
+        <BreakRow
+          label={t('Dashboard_pending_total')}
+          value={`−${formatCurrency(totals.pendingUntilDate, totals.currency)}`}
+          accent="expense"
+        />
+        <div className="my-1 border-t border-border" />
+        <BreakRow
+          label={t('Dashboard_result')}
+          value={formatCurrency(totals.projectedBalance, totals.currency)}
+          accent={negative ? 'expense' : 'income'}
+          strong
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+function BreakRow({
+  label,
+  value,
+  accent,
+  strong,
+}: {
+  label: string;
+  value: string;
+  accent?: 'income' | 'expense';
+  strong?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <span className={cn('text-muted-foreground', strong && 'font-medium text-foreground')}>
+        {label}
+      </span>
+      <span
+        className={cn(
+          'tabular-nums',
+          strong ? 'text-[15px] font-semibold' : 'font-medium',
+          accent === 'income' && 'text-income',
+          accent === 'expense' && 'text-expense',
+        )}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// Placeholder: pending-expenses composition by category. Real data depends on the
+// `expenses_categories` table (still pending). Swap `PLACEHOLDER_CATEGORIES` for the
+// forecast's `categoryBreakdown` once categories are wired up.
+const PLACEHOLDER_CATEGORIES = [
+  { name: 'Vivienda', value: 920, color: '#0ea5e9' },
+  { name: 'Suministros', value: 340, color: '#f59e0b' },
+  { name: 'Préstamos', value: 510, color: '#8b5cf6' },
+  { name: 'Seguros', value: 180, color: '#14b8a6' },
+  { name: 'Suscripciones', value: 95, color: '#ec4899' },
+  { name: 'Tarjetas', value: 260, color: '#ef4444' },
+] as const;
+
+function CategoryPieCard({
+  formatCurrency,
+  currency,
+}: {
+  formatCurrency: (amount: string, currency: string) => string;
+  currency: string;
+}) {
+  const { t } = useTranslation();
+  const total = PLACEHOLDER_CATEGORIES.reduce((s, c) => s + c.value, 0);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('Dashboard_category_title')}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="h-36 w-36 shrink-0 opacity-60">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={PLACEHOLDER_CATEGORIES as unknown as { name: string; value: number }[]}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={42}
+                outerRadius={66}
+                paddingAngle={2}
+                stroke="none"
+              >
+                {PLACEHOLDER_CATEGORIES.map((c) => (
+                  <Cell key={c.name} fill={c.color} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="min-w-0 flex-1">
+          <ul className="flex flex-col gap-2">
+            {PLACEHOLDER_CATEGORIES.map((c) => (
+              <li key={c.name} className="flex items-center gap-2.5 text-sm">
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                  style={{ background: c.color }}
+                />
+                <span className="flex-1 truncate text-foreground/80">{c.name}</span>
+                <span className="tabular-nums text-[13px] text-muted-foreground">
+                  {Math.round((c.value / total) * 100)}%
+                </span>
+                <span className="w-20 text-right tabular-nums text-[13px] font-medium">
+                  {formatCurrency(c.value.toFixed(2), currency)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-[12px] text-muted-foreground">
+            {t('Dashboard_category_placeholder')}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ForecastSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {[0, 1, 2].map((i) => (
+    <>
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+        {[0, 1].map((i) => (
+          <Card key={i}>
+            <CardHeader>
+              <div className="h-4 w-28 animate-pulse rounded bg-muted" />
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <div className="h-4 w-full animate-pulse rounded bg-muted" />
+              <div className="h-4 w-full animate-pulse rounded bg-muted" />
+              <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[0, 1, 2].map((i) => (
         <Card key={i}>
           <CardHeader>
             <div className="h-4 w-24 animate-pulse rounded bg-muted" />
@@ -247,8 +416,9 @@ function ForecastSkeleton() {
             <div className="h-7 w-full animate-pulse rounded bg-muted" />
           </CardContent>
         </Card>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   );
 }
 

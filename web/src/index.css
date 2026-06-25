@@ -49,8 +49,8 @@
 
   /* Semantic tokens (finflow design handoff). Full colors; v4 handles /opacity via color-mix. */
   --brand: rgb(13 148 136);
-  --income: rgb(22 163 74);
-  --expense: rgb(220 38 38);
+  --income: var(--color-green-600);
+  --expense: var(--color-red-500);
   --warning: rgb(217 119 6);
 
   --chart-1: oklch(0.87 0 0);

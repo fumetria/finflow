@@ -46,8 +46,26 @@ export async function getForecast(userId: string, dateStr?: string) {
     };
   });
 
+  const totals = accountsForecast.reduce(
+    (acc, a) => {
+      acc.currentBalance += Number(a.currentBalance);
+      acc.pendingUntilDate += Number(a.pendingUntilDate);
+      acc.projectedBalance += Number(a.projectedBalance);
+      return acc;
+    },
+    { currentBalance: 0, pendingUntilDate: 0, projectedBalance: 0 },
+  );
+
   return {
     date: targetDate.toISOString().slice(0, 10),
     accounts: accountsForecast,
+    totals: {
+      // Single-currency assumption (coherente con el resto de la app). La moneda
+      // representativa es la de la primera cuenta; mezclar divisas queda fuera de alcance.
+      currency: userAccounts[0]?.currency ?? 'EUR',
+      currentBalance: totals.currentBalance.toFixed(2),
+      pendingUntilDate: totals.pendingUntilDate.toFixed(2),
+      projectedBalance: totals.projectedBalance.toFixed(2),
+    },
   };
 }

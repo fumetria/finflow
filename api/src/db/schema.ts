@@ -62,6 +62,14 @@ export const entities = pgTable('entities', {
   ...timestamps,
 });
 
+// Expenses categories
+
+export const expensesCategories = pgTable('expenses_categories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar().notNull(),
+  ...timestamps,
+});
+
 // Expenses
 
 export const expenses = pgTable('expenses', {
@@ -73,6 +81,7 @@ export const expenses = pgTable('expenses', {
     .notNull()
     .references(() => accounts.id),
   entityId: uuid('entity_id').references(() => entities.id, { onDelete: 'set null' }),
+  categoryId: uuid('category_id').references(() => expensesCategories.id, { onDelete: 'set null' }),
   concept: varchar('concept', { length: 255 }).notNull(),
   amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
   dueDate: timestamp('due_date').notNull(),
@@ -98,6 +107,7 @@ export const recurringRules = pgTable('recurring_rules', {
     .references(() => accounts.id),
   concept: varchar('concept', { length: 255 }).notNull(),
   entityId: uuid('entity_id').references(() => entities.id, { onDelete: 'set null' }),
+  categoryId: uuid('category_id').references(() => expensesCategories.id, { onDelete: 'set null' }),
   amount: numeric('amount', { precision: 12, scale: 2 }),
   frequency: frecuencyEnum('frecuency').notNull(),
   dayOfMonth: integer(),
