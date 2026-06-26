@@ -38,6 +38,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useCurrencyFormatter } from '@/lib/currency';
 import { fetchAccounts, type Account } from '@/features/accounts/accounts.api';
+import { fetchCategories, type Category } from '@/features/expenses_categories/categories.api';
 import { recurringSchema, type RecurringFormData } from './recurring.schema';
 import {
   fetchRecurringRules,
@@ -69,6 +70,7 @@ export default function Recurring() {
 
   const [rules, setRules] = useState<RecurringRule[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -81,11 +83,12 @@ export default function Recurring() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchRecurringRules(), fetchAccounts()])
-      .then(([r, acc]) => {
+    Promise.all([fetchRecurringRules(), fetchAccounts(), fetchCategories()])
+      .then(([r, acc, cats]) => {
         if (!cancelled) {
           setRules(r);
           setAccounts(acc);
+          setCategories(cats);
           setError(false);
         }
       })
@@ -270,6 +273,7 @@ export default function Recurring() {
         <RuleDialog
           rule={editing.rule}
           accounts={accounts}
+          categories={categories}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -295,11 +299,13 @@ export default function Recurring() {
 function RuleDialog({
   rule,
   accounts,
+  categories,
   onClose,
   onSaved,
 }: {
   rule: RecurringRule | null;
   accounts: Account[];
+  categories: Category[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -323,6 +329,7 @@ function RuleDialog({
       dayOfMonth: rule?.dayOfMonth != null ? String(rule.dayOfMonth) : '',
       startDate: rule?.startDate ? rule.startDate.slice(0, 10) : toInputValue(new Date()),
       endDate: rule?.endDate ? rule.endDate.slice(0, 10) : '',
+      categoryId: rule?.categoryId ?? '',
       notes: rule?.notes ?? '',
     },
   });
@@ -341,6 +348,7 @@ function RuleDialog({
           showDayOfMonth && data.dayOfMonth !== '' ? Number(data.dayOfMonth) : undefined,
         startDate: toIsoUtc(data.startDate),
         endDate: data.endDate ? toIsoUtc(data.endDate) : null,
+        categoryId: data.categoryId ? data.categoryId : null,
         notes: data.notes ? data.notes : null,
       };
       if (isEdit) {
@@ -489,6 +497,22 @@ function RuleDialog({
                 )}
               </div>
             )}
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="categoryId">{t('Recurring_col_category')}</Label>
+              <select
+                id="categoryId"
+                className="h-9 w-full rounded-md border border-input bg-input/20 px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-input/30"
+                {...register('categoryId')}
+              >
+                <option value="">{t('Recurring_category_none')}</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="notes">{t('Recurring_col_notes')}</Label>

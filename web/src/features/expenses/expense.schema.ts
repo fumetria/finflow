@@ -20,6 +20,7 @@ export const expenseSchema = z.object({
       message: 'Expenses_error_amount_decimals',
     }),
   dueDate: z.string().min(1, 'Expenses_error_due'),
+  categoryId: z.string().optional(),
   notes: z.string().trim().max(2000, 'Expenses_error_notes_long').optional(),
 });
 

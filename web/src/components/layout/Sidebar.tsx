@@ -5,6 +5,7 @@ import {
   DashboardSquare01Icon,
   Wallet01Icon,
   ReceiptTextIcon,
+  TagIcon,
   RepeatIcon,
   BankIcon,
   PlusSignIcon,
@@ -31,6 +32,7 @@ const NAV: NavEntry[] = [
   { to: '/dashboard', labelKey: 'Nav_dashboard', icon: DashboardSquare01Icon },
   { to: '/accounts', labelKey: 'Nav_accounts', icon: Wallet01Icon },
   { to: '/expenses', labelKey: 'Nav_expenses', icon: ReceiptTextIcon },
+  { to: '/categories', labelKey: 'Nav_categories', icon: TagIcon },
   { to: '/recurring', labelKey: 'Nav_recurring', icon: RepeatIcon },
   { to: '/loans', labelKey: 'Nav_loans', icon: BankIcon },
 ];

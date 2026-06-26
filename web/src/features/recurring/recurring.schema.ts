@@ -27,6 +27,7 @@ export const recurringSchema = z
       }),
     startDate: z.string().min(1, 'Recurring_error_start'),
     endDate: z.string(),
+    categoryId: z.string().optional(),
     notes: z.string().trim().max(2000, 'Recurring_error_notes_long').optional(),
   })
   .refine((d) => d.endDate === '' || d.endDate >= d.startDate, {

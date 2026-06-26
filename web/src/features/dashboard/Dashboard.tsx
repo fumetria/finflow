@@ -13,6 +13,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import {
   fetchForecast,
   type AccountForecast,
+  type CategoryBreakdownItem,
   type ForecastResponse,
   type ForecastTotals,
 } from './forecast';
@@ -157,7 +158,11 @@ export default function Dashboard() {
             </p>
             <div className="mb-6 grid gap-4 lg:grid-cols-2">
               <CompositionCard totals={data.totals} formatCurrency={formatCurrency} />
-              <CategoryPieCard formatCurrency={formatCurrency} currency={data.totals.currency} />
+              <CategoryPieCard
+                breakdown={data.categoryBreakdown}
+                formatCurrency={formatCurrency}
+                currency={data.totals.currency}
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {data.accounts.map((account) => (
@@ -312,75 +317,98 @@ function BreakRow({
   );
 }
 
-// Placeholder: pending-expenses composition by category. Real data depends on the
-// `expenses_categories` table (still pending). Swap `PLACEHOLDER_CATEGORIES` for the
-// forecast's `categoryBreakdown` once categories are wired up.
-const PLACEHOLDER_CATEGORIES = [
-  { name: 'Vivienda', value: 920, color: '#0ea5e9' },
-  { name: 'Suministros', value: 340, color: '#f59e0b' },
-  { name: 'Préstamos', value: 510, color: '#8b5cf6' },
-  { name: 'Seguros', value: 180, color: '#14b8a6' },
-  { name: 'Suscripciones', value: 95, color: '#ec4899' },
-  { name: 'Tarjetas', value: 260, color: '#ef4444' },
+// Fixed palette assigned to category slices by index (categories have no color
+// of their own). The last color is reserved for the "uncategorized" bucket.
+const CATEGORY_PALETTE = [
+  '#0ea5e9',
+  '#f59e0b',
+  '#8b5cf6',
+  '#14b8a6',
+  '#ec4899',
+  '#ef4444',
+  '#22c55e',
+  '#6366f1',
 ] as const;
+const UNCATEGORIZED_COLOR = '#94a3b8';
 
+// Pending-expenses composition by category, within the selected projection
+// window. Reacts to the date selector via the forecast's `categoryBreakdown`.
 function CategoryPieCard({
+  breakdown,
   formatCurrency,
   currency,
 }: {
+  breakdown: CategoryBreakdownItem[];
   formatCurrency: (amount: string, currency: string) => string;
   currency: string;
 }) {
   const { t } = useTranslation();
-  const total = PLACEHOLDER_CATEGORIES.reduce((s, c) => s + c.value, 0);
+
+  const slices = useMemo(
+    () =>
+      breakdown.map((item, i) => ({
+        key: item.categoryId ?? '__uncategorized__',
+        name: item.name ?? t('Dashboard_category_uncategorized'),
+        value: Number(item.total),
+        color: item.categoryId ? CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]! : UNCATEGORIZED_COLOR,
+      })),
+    [breakdown, t],
+  );
+
+  const total = slices.reduce((s, c) => s + c.value, 0);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>{t('Dashboard_category_title')}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="h-36 w-36 shrink-0 opacity-60">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={PLACEHOLDER_CATEGORIES as unknown as { name: string; value: number }[]}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={42}
-                outerRadius={66}
-                paddingAngle={2}
-                stroke="none"
-              >
-                {PLACEHOLDER_CATEGORIES.map((c) => (
-                  <Cell key={c.name} fill={c.color} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="min-w-0 flex-1">
-          <ul className="flex flex-col gap-2">
-            {PLACEHOLDER_CATEGORIES.map((c) => (
-              <li key={c.name} className="flex items-center gap-2.5 text-sm">
-                <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-sm"
-                  style={{ background: c.color }}
-                />
-                <span className="flex-1 truncate text-foreground/80">{c.name}</span>
-                <span className="tabular-nums text-[13px] text-muted-foreground">
-                  {Math.round((c.value / total) * 100)}%
-                </span>
-                <span className="w-20 text-right tabular-nums text-[13px] font-medium">
-                  {formatCurrency(c.value.toFixed(2), currency)}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-[12px] text-muted-foreground">
-            {t('Dashboard_category_placeholder')}
+      <CardContent>
+        {total === 0 ? (
+          <p className="py-8 text-center text-[13px] text-muted-foreground">
+            {t('Dashboard_category_empty')}
           </p>
-        </div>
+        ) : (
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="h-36 w-36 shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={slices}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={42}
+                    outerRadius={66}
+                    paddingAngle={2}
+                    stroke="none"
+                  >
+                    {slices.map((c) => (
+                      <Cell key={c.key} fill={c.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="min-w-0 flex-1">
+              <ul className="flex flex-col gap-2">
+                {slices.map((c) => (
+                  <li key={c.key} className="flex items-center gap-2.5 text-sm">
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                      style={{ background: c.color }}
+                    />
+                    <span className="flex-1 truncate text-foreground/80">{c.name}</span>
+                    <span className="tabular-nums text-[13px] text-muted-foreground">
+                      {Math.round((c.value / total) * 100)}%
+                    </span>
+                    <span className="w-20 text-right tabular-nums text-[13px] font-medium">
+                      {formatCurrency(c.value.toFixed(2), currency)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

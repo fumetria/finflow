@@ -7,6 +7,7 @@ export type Expense = {
   userId: string;
   accountId: string;
   entityId: string | null;
+  categoryId: string | null;
   concept: string;
   amount: string;
   dueDate: string;
@@ -21,6 +22,7 @@ export type Expense = {
 
 export type ExpenseInput = {
   accountId: string;
+  categoryId?: string | null;
   concept: string;
   amount: number;
   dueDate: string; // ISO datetime

@@ -17,9 +17,18 @@ export type ForecastTotals = {
   projectedBalance: string;
 };
 
+// Pending-expenses composition by category, within the same projection window.
+// `categoryId`/`name` are null for the "uncategorized" bucket.
+export type CategoryBreakdownItem = {
+  categoryId: string | null;
+  name: string | null;
+  total: string;
+};
+
 export type ForecastResponse = {
   date: string;
   accounts: AccountForecast[];
+  categoryBreakdown: CategoryBreakdownItem[];
   totals: ForecastTotals;
 };
 

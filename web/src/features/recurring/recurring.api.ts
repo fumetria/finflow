@@ -7,6 +7,7 @@ export type RecurringRule = {
   userId: string;
   accountId: string;
   entityId: string | null;
+  categoryId: string | null;
   concept: string;
   amount: string | null;
   frequency: Frequency;
@@ -30,6 +31,7 @@ export type RecurringRuleCreateInput = {
   dayOfMonth?: number;
   startDate: string; // ISO datetime
   endDate?: string | null; // ISO datetime
+  categoryId?: string | null;
   notes?: string | null;
 };
 

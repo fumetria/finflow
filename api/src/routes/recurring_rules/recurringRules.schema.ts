@@ -8,6 +8,7 @@ export const createRecurringRuleSchema = z.object({
   dayOfMonth: z.number().optional(),
   startDate: z.iso.datetime(),
   entityId: z.uuid().nullable().optional(),
+  categoryId: z.uuid().nullable().optional(),
   endDate: z.iso.datetime().nullable().optional(),
   notes: z.string().nullable().optional(),
 });
@@ -20,6 +21,7 @@ export const updateRecurringRuleSchema = z
     dayOfMonth: z.number().optional(),
     startDate: z.iso.datetime().optional(),
     entityId: z.uuid().nullable().optional(),
+    categoryId: z.uuid().nullable().optional(),
     endDate: z.iso.datetime().nullable().optional(),
     active: z.boolean().optional(),
     notes: z.string().nullable().optional(),

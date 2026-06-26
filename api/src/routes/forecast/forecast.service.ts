@@ -1,5 +1,5 @@
-import { and, eq, lte, sql } from 'drizzle-orm';
-import { accounts, expenses, db } from '../../db/index.js';
+import { and, desc, eq, lte, sql } from 'drizzle-orm';
+import { accounts, expenses, expensesCategories, db } from '../../db/index.js';
 
 // Forecast = current_balance − pending_expenses_until_date, per account.
 // Incomes are postponed (Phase 2 decision), so no expected_incomes term yet.
@@ -31,6 +31,32 @@ export async function getForecast(userId: string, dateStr?: string) {
 
   const pendingByAccount = new Map(pendingRows.map((r) => [r.accountId, Number(r.total)]));
 
+  // Pending expenses grouped by category (same window as the forecast). Expenses
+  // with no category fall into a null bucket (left join keeps them).
+  const categoryRows = await db
+    .select({
+      categoryId: expenses.categoryId,
+      name: expensesCategories.name,
+      total: sql<string>`coalesce(sum(${expenses.amount}), 0)`,
+    })
+    .from(expenses)
+    .leftJoin(expensesCategories, eq(expenses.categoryId, expensesCategories.id))
+    .where(
+      and(
+        eq(expenses.userId, userId),
+        eq(expenses.status, 'pending'),
+        lte(expenses.dueDate, targetDate),
+      ),
+    )
+    .groupBy(expenses.categoryId, expensesCategories.name)
+    .orderBy(desc(sql`sum(${expenses.amount})`));
+
+  const categoryBreakdown = categoryRows.map((r) => ({
+    categoryId: r.categoryId,
+    name: r.name,
+    total: Number(r.total).toFixed(2),
+  }));
+
   const accountsForecast = userAccounts.map((account) => {
     const pending = pendingByAccount.get(account.id) ?? 0;
     const current = Number(account.currentBalance);
@@ -59,6 +85,7 @@ export async function getForecast(userId: string, dateStr?: string) {
   return {
     date: targetDate.toISOString().slice(0, 10),
     accounts: accountsForecast,
+    categoryBreakdown,
     totals: {
       // Single-currency assumption (coherente con el resto de la app). La moneda
       // representativa es la de la primera cuenta; mezclar divisas queda fuera de alcance.

@@ -35,6 +35,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useCurrencyFormatter } from '@/lib/currency';
 import { fetchAccounts, type Account } from '@/features/accounts/accounts.api';
+import { fetchCategories, type Category } from '@/features/expenses_categories/categories.api';
 import { expenseSchema, type ExpenseFormData } from './expense.schema';
 import {
   fetchExpenses,
@@ -58,6 +59,7 @@ export default function Expenses() {
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -83,11 +85,12 @@ export default function Expenses() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchExpenses(), fetchAccounts()])
-      .then(([exp, acc]) => {
+    Promise.all([fetchExpenses(), fetchAccounts(), fetchCategories()])
+      .then(([exp, acc, cats]) => {
         if (!cancelled) {
           setExpenses(exp);
           setAccounts(acc);
+          setCategories(cats);
           setError(false);
         }
       })
@@ -208,6 +211,7 @@ export default function Expenses() {
         <ExpenseDialog
           expense={editing.expense}
           accounts={accounts}
+          categories={categories}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -290,11 +294,13 @@ function ExpenseRow({
 function ExpenseDialog({
   expense,
   accounts,
+  categories,
   onClose,
   onSaved,
 }: {
   expense: Expense | null;
   accounts: Account[];
+  categories: Category[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -314,6 +320,7 @@ function ExpenseDialog({
       concept: expense?.concept ?? '',
       amount: expense?.amount ?? '',
       dueDate: expense ? expense.dueDate.slice(0, 10) : toInputValue(new Date()),
+      categoryId: expense?.categoryId ?? '',
       notes: expense?.notes ?? '',
     },
   });
@@ -328,6 +335,7 @@ function ExpenseDialog({
         // Store at midnight UTC so the date the user picks doesn't shift across
         // timezones (matches how the backend computes recurring due dates).
         dueDate: new Date(`${data.dueDate}T00:00:00.000Z`).toISOString(),
+        categoryId: data.categoryId ? data.categoryId : null,
         notes: data.notes ? data.notes : null,
       };
       if (isEdit) {
@@ -424,6 +432,22 @@ function ExpenseDialog({
                   <p className="text-[12px] text-expense">{t(errors.dueDate.message!)}</p>
                 )}
               </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="categoryId">{t('Expenses_col_category')}</Label>
+              <select
+                id="categoryId"
+                className="h-9 w-full rounded-md border border-input bg-input/20 px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-input/30"
+                {...register('categoryId')}
+              >
+                <option value="">{t('Expenses_category_none')}</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex flex-col gap-1.5">
