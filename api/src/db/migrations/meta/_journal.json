@@ -36,6 +36,13 @@
       "when": 1782427691260,
       "tag": "0004_flashy_blade",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782510349895,
+      "tag": "0005_short_the_fallen",
+      "breakpoints": true
     }
   ]
 }

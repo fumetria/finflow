@@ -66,6 +66,9 @@ export const entities = pgTable('entities', {
 
 export const expensesCategories = pgTable('expenses_categories', {
   id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   name: varchar().notNull(),
   ...timestamps,
 });

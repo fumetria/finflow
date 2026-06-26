@@ -9,6 +9,7 @@ import expenseRouter from './routes/expenses/expenses.router.js';
 import recurringRulesRouter from './routes/recurring_rules/recurringRules.router.js';
 import forecastRouter from './routes/forecast/forecast.router.js';
 import loansRouter from './routes/loans/loans.router.js';
+import expensesCategoriesRouter from './routes/expenses_categories/expensesCategories.router.js';
 import { metricsMiddleware, metricsHandler } from './metrics.js';
 import cors from 'cors';
 
@@ -28,6 +29,7 @@ app.use('/api/v1/expenses', expenseRouter);
 app.use('/api/v1/recurring-rules', recurringRulesRouter);
 app.use('/api/v1/forecast', forecastRouter);
 app.use('/api/v1/loans', loansRouter);
+app.use('/api/v1/expenses-categories', expensesCategoriesRouter);
 
 app.get('/health', async (_req, res) => {
   await db.execute(sql`SELECT 1`);
