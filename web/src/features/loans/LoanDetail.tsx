@@ -59,9 +59,10 @@ function LoanDetailView({ id }: { id: string | undefined }) {
     };
   }, [id]);
 
+  const accountId = data?.loan.accountId;
   const account = useMemo(
-    () => accounts.find((a) => a.id === data?.loan.accountId),
-    [accounts, data?.loan.accountId],
+    () => accounts.find((a) => a.id === accountId),
+    [accounts, accountId],
   );
   const currency = account?.currency ?? 'EUR';
 
