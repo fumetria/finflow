@@ -261,7 +261,7 @@ function ExpenseRow({
         <span
           className={cn(
             'inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 text-[11px] font-medium',
-            isPending ? 'bg-muted text-muted-foreground' : 'bg-income/10 text-income',
+            isPending ? 'bg-warning/10 text-warning' : 'bg-income/10 text-income',
           )}
         >
           {!isPending && <HugeiconsIcon icon={CheckmarkCircle02Icon} size={12} />}
