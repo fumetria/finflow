@@ -80,6 +80,86 @@ services:
     depends_on:
       - prometheus
 
+  # One-shot: applies Drizzle migrations, then exits. The api waits for it to
+  # finish successfully before starting.
+  migrate:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: finflow-migrate
+    restart: "no"
+    command: ["pnpm", "exec", "tsx", "src/migrate.ts"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: finflow-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_PORT: 4000
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    container_name: finflow-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    container_name: finflow-worker
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_CLIENT_ID: ${KAFKA_CLIENT_ID:-finflow-worker}
+      KAFKA_DUE_SOON_TOPIC: ${KAFKA_DUE_SOON_TOPIC:-expense.due_soon}
+      KAFKA_CONSUMER_GROUP: ${KAFKA_CONSUMER_GROUP:-finflow-due-soon}
+      DUE_SOON_DAYS: ${DUE_SOON_DAYS:-3}
+      DUE_SOON_CRON: ${DUE_SOON_CRON:-0 8 * * *}
+      RUN_SCAN_ON_BOOT: ${RUN_SCAN_ON_BOOT:-false}
+      WORKER_METRICS_PORT: 9100
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      MAIL_FROM: ${MAIL_FROM:-finflow@example.com}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
 volumes:
   postgres_data:
   kafka_data:
