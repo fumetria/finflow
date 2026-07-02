@@ -11,6 +11,8 @@ import forecastRouter from './routes/forecast/forecast.router.js';
 import loansRouter from './routes/loans/loans.router.js';
 import expensesCategoriesRouter from './routes/expenses_categories/expensesCategories.router.js';
 import { metricsMiddleware, metricsHandler } from './metrics.js';
+import swaggerUi from 'swagger-ui-express';
+import { openApiDocument } from './openapi/document.js';
 import cors from 'cors';
 
 const app = express();
@@ -30,6 +32,10 @@ app.use('/api/v1/recurring-rules', recurringRulesRouter);
 app.use('/api/v1/forecast', forecastRouter);
 app.use('/api/v1/loans', loansRouter);
 app.use('/api/v1/expenses-categories', expensesCategoriesRouter);
+
+// API docs: raw OpenAPI spec + Swagger UI.
+app.get('/api/v1/docs/openapi.json', (_req, res) => res.json(openApiDocument));
+app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
 
 app.get('/health', async (_req, res) => {
   await db.execute(sql`SELECT 1`);
