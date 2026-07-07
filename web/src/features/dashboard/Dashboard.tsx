@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { Wallet01Icon, Alert02Icon, CheckmarkCircle02Icon } from '@hugeicons/core-free-icons';
-
+import { Icon } from '@/components/icon/Icon';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -232,14 +230,14 @@ function AccountCard({
 
         {short > 0 ? (
           <div className="flex items-center gap-1.5 rounded-md bg-expense/10 px-2.5 py-1.5 text-xs font-medium text-expense">
-            <HugeiconsIcon icon={Alert02Icon} size={14} />
+            <Icon name="important" size={14} />
             {t('Dashboard_shortfall', {
               amount: formatCurrency(account.shortfall, account.currency),
             })}
           </div>
         ) : (
           <div className="flex items-center gap-1.5 rounded-md bg-income/10 px-2.5 py-1.5 text-xs font-medium text-income">
-            <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} />
+            <Icon name="check" size={14} />
             {t('Dashboard_covered')}
           </div>
         )}
@@ -456,7 +454,7 @@ function EmptyState() {
     <Card className="items-center py-12 text-center">
       <CardContent className="flex flex-col items-center gap-3">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <HugeiconsIcon icon={Wallet01Icon} size={22} />
+          <Icon name="wallet" size={22} />
         </span>
         <p className="text-sm font-medium text-foreground">{t('Dashboard_empty_title')}</p>
         <Button asChild size="sm">
