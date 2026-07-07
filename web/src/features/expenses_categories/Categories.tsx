@@ -3,9 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { isAxiosError } from 'axios';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { PlusSignIcon, TagIcon, PencilEdit02Icon, Delete02Icon } from '@hugeicons/core-free-icons';
-
+import { Icon } from '@/components/icon/Icon';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -82,7 +80,7 @@ export default function Categories() {
           <p className="text-sm text-muted-foreground">{t('Categories_subtitle')}</p>
         </div>
         <Button size="sm" onClick={() => setEditing({ category: null })}>
-          <HugeiconsIcon icon={PlusSignIcon} size={16} />
+          <Icon name="add" size={16} />
           {t('Categories_new')}
         </Button>
       </div>
@@ -118,7 +116,7 @@ export default function Categories() {
                             aria-label={t('Categories_edit')}
                             onClick={() => setEditing({ category })}
                           >
-                            <HugeiconsIcon icon={PencilEdit02Icon} size={16} />
+                            <Icon name="edit" size={16} />
                           </Button>
                           <Button
                             variant="ghost"
@@ -126,7 +124,7 @@ export default function Categories() {
                             aria-label={t('Categories_delete')}
                             onClick={() => setDeleting(category)}
                           >
-                            <HugeiconsIcon icon={Delete02Icon} size={16} />
+                            <Icon name="trash" size={16} />
                           </Button>
                         </div>
                       </TableCell>
@@ -303,12 +301,12 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
     <Card className="items-center py-12 text-center">
       <CardContent className="flex flex-col items-center gap-3">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <HugeiconsIcon icon={TagIcon} size={22} />
+          <Icon name="tag" size={22} />
         </span>
         <p className="text-sm font-medium text-foreground">{t('Categories_empty_title')}</p>
         <p className="max-w-xs text-xs text-muted-foreground">{t('Categories_empty_subtitle')}</p>
         <Button size="sm" onClick={onCreate}>
-          <HugeiconsIcon icon={PlusSignIcon} size={16} />
+          <Icon name="add" size={16} />
           {t('Categories_new')}
         </Button>
       </CardContent>

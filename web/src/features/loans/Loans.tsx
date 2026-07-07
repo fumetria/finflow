@@ -4,9 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { isAxiosError } from 'axios';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { PlusSignIcon, BankIcon, RefreshIcon } from '@hugeicons/core-free-icons';
-
+import { Icon } from '@/components/icon/Icon';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -122,11 +120,11 @@ export default function Loans() {
             disabled={materializing || loans.length === 0}
             onClick={handleMaterialize}
           >
-            <HugeiconsIcon icon={RefreshIcon} size={16} />
+            <Icon name="refresh" size={16} />
             {t('Loans_materialize')}
           </Button>
           <Button size="sm" onClick={() => setCreating(true)}>
-            <HugeiconsIcon icon={PlusSignIcon} size={16} />
+            <Icon name="add" size={16} />
             {t('Loans_new')}
           </Button>
         </div>
@@ -432,12 +430,12 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
     <Card className="items-center py-12 text-center">
       <CardContent className="flex flex-col items-center gap-3">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <HugeiconsIcon icon={BankIcon} size={22} />
+          <Icon name="library" size={22} />
         </span>
         <p className="text-sm font-medium text-foreground">{t('Loans_empty_title')}</p>
         <p className="max-w-xs text-xs text-muted-foreground">{t('Loans_empty_subtitle')}</p>
         <Button size="sm" onClick={onCreate}>
-          <HugeiconsIcon icon={PlusSignIcon} size={16} />
+          <Icon name="add" size={16} />
           {t('Loans_new')}
         </Button>
       </CardContent>

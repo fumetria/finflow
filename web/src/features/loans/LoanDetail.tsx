@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { ArrowLeft01Icon, CheckmarkCircle02Icon } from '@hugeicons/core-free-icons';
-
+import { Icon } from '@/components/icon/Icon';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -87,7 +85,7 @@ function LoanDetailView({ id }: { id: string | undefined }) {
     <div className="mx-auto max-w-5xl px-7 py-6">
       <Button asChild variant="ghost" size="sm" className="-ml-2 mb-3 text-muted-foreground">
         <Link to="/loans">
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={16} />
+          <Icon name="arrow-thin-left-circle" size={16} />
           {t('Loans_back')}
         </Link>
       </Button>
@@ -203,7 +201,7 @@ function LoanDetailView({ id }: { id: string | undefined }) {
                               paid ? 'bg-income/10 text-income' : 'bg-muted text-muted-foreground',
                             )}
                           >
-                            {paid && <HugeiconsIcon icon={CheckmarkCircle02Icon} size={12} />}
+                            {paid && <Icon name="check" size={12} />}
                             {t(`Loans_inst_status_${it.status}`)}
                           </span>
                         </TableCell>

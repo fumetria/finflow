@@ -4,14 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
 import { isAxiosError } from 'axios';
-import { HugeiconsIcon } from '@hugeicons/react';
-import {
-  PlusSignIcon,
-  ReceiptTextIcon,
-  PencilEdit02Icon,
-  CheckmarkCircle02Icon,
-} from '@hugeicons/core-free-icons';
-
+import { Icon } from '@/components/icon/Icon';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -146,7 +139,7 @@ export default function Expenses() {
           <p className="text-sm text-muted-foreground">{t('Expenses_subtitle')}</p>
         </div>
         <Button size="sm" onClick={() => setEditing({ expense: null })}>
-          <HugeiconsIcon icon={PlusSignIcon} size={16} />
+          <Icon name="add" size={16} />
           {t('Expenses_new')}
         </Button>
       </div>
@@ -264,7 +257,7 @@ function ExpenseRow({
             isPending ? 'bg-warning/10 text-warning' : 'bg-income/10 text-income',
           )}
         >
-          {!isPending && <HugeiconsIcon icon={CheckmarkCircle02Icon} size={12} />}
+          {!isPending && <Icon name="check" size={12} />}
           {t(`Expenses_status_${expense.status}`)}
         </span>
       </TableCell>
@@ -277,7 +270,7 @@ function ExpenseRow({
               aria-label={t('Expenses_edit')}
               onClick={onEdit}
             >
-              <HugeiconsIcon icon={PencilEdit02Icon} size={16} />
+              <Icon name="edit" size={16} />
             </Button>
             <Button size="xs" variant="outline" disabled={paying} onClick={onPay}>
               {t('Expenses_mark_paid')}
@@ -496,7 +489,7 @@ function EmptyState({ filtered, onCreate }: { filtered: boolean; onCreate: () =>
     <Card className="items-center py-12 text-center">
       <CardContent className="flex flex-col items-center gap-3">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <HugeiconsIcon icon={ReceiptTextIcon} size={22} />
+          <Icon name="receipt" size={22} />
         </span>
         <p className="text-sm font-medium text-foreground">
           {t(filtered ? 'Expenses_empty_filtered' : 'Expenses_empty_title')}
@@ -505,7 +498,7 @@ function EmptyState({ filtered, onCreate }: { filtered: boolean; onCreate: () =>
           <>
             <p className="max-w-xs text-xs text-muted-foreground">{t('Expenses_empty_subtitle')}</p>
             <Button size="sm" onClick={onCreate}>
-              <HugeiconsIcon icon={PlusSignIcon} size={16} />
+              <Icon name="add" size={16} />
               {t('Expenses_new')}
             </Button>
           </>

@@ -1,20 +1,7 @@
 import { NavLink, useNavigate, Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { HugeiconsIcon } from '@hugeicons/react';
-import {
-  DashboardSquare01Icon,
-  Wallet01Icon,
-  ReceiptTextIcon,
-  TagIcon,
-  RepeatIcon,
-  BankIcon,
-  PlusSignIcon,
-  Sun01Icon,
-  Moon02Icon,
-  ComputerDesk01Icon,
-  Logout01Icon,
-} from '@hugeicons/core-free-icons';
 
+import { Icon, type IconName } from '@/components/icon/Icon';
 import { BrandMark } from '@/components/BrandMark';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -25,16 +12,16 @@ import { cn } from '@/lib/utils';
 type NavEntry = {
   to: string;
   labelKey: string;
-  icon: typeof DashboardSquare01Icon;
+  icon: IconName;
 };
 
 const NAV: NavEntry[] = [
-  { to: '/dashboard', labelKey: 'Nav_dashboard', icon: DashboardSquare01Icon },
-  { to: '/accounts', labelKey: 'Nav_accounts', icon: Wallet01Icon },
-  { to: '/expenses', labelKey: 'Nav_expenses', icon: ReceiptTextIcon },
-  { to: '/categories', labelKey: 'Nav_categories', icon: TagIcon },
-  { to: '/recurring', labelKey: 'Nav_recurring', icon: RepeatIcon },
-  { to: '/loans', labelKey: 'Nav_loans', icon: BankIcon },
+  { to: '/dashboard', labelKey: 'Nav_dashboard', icon: 'dashboard' },
+  { to: '/accounts', labelKey: 'Nav_accounts', icon: 'wallet' },
+  { to: '/expenses', labelKey: 'Nav_expenses', icon: 'receipt' },
+  { to: '/categories', labelKey: 'Nav_categories', icon: 'tag' },
+  { to: '/recurring', labelKey: 'Nav_recurring', icon: 'refresh' },
+  { to: '/loans', labelKey: 'Nav_loans', icon: 'library' },
 ];
 
 function NavItem({ entry }: { entry: NavEntry }) {
@@ -56,8 +43,8 @@ function NavItem({ entry }: { entry: NavEntry }) {
           {isActive && (
             <span className="absolute left-0 h-5 w-[3px] rounded-r-full bg-brand" />
           )}
-          <HugeiconsIcon
-            icon={entry.icon}
+          <Icon
+            name={entry.icon}
             size={18}
             className={isActive ? 'text-brand' : ''}
           />
@@ -92,7 +79,7 @@ export default function Sidebar() {
       <div className="px-3 pt-2">
         <Button asChild className="w-full justify-start">
           <Link to="/expenses?new=1">
-            <HugeiconsIcon icon={PlusSignIcon} size={16} />
+            <Icon name="add" size={16} />
             {t('Nav_new_expense')}
           </Link>
         </Button>
@@ -111,9 +98,9 @@ export default function Sidebar() {
         <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
           {(
             [
-              { value: 'light', icon: Sun01Icon, labelKey: 'Topbar_theme_light' },
-              { value: 'dark', icon: Moon02Icon, labelKey: 'Topbar_theme_dark' },
-              { value: 'system', icon: ComputerDesk01Icon, labelKey: 'Topbar_theme_system' },
+              { value: 'light', icon: 'light', labelKey: 'Topbar_theme_light' },
+              { value: 'dark', icon: 'moon', labelKey: 'Topbar_theme_dark' },
+              { value: 'system', icon: 'monitor', labelKey: 'Topbar_theme_system' },
             ] as const
           ).map(({ value, icon, labelKey }) => (
             <button
@@ -127,7 +114,7 @@ export default function Sidebar() {
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              <HugeiconsIcon icon={icon} size={15} />
+              <Icon name={icon} size={15} />
             </button>
           ))}
         </div>
@@ -146,7 +133,7 @@ export default function Sidebar() {
             className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             title={t('Sidebar_logout')}
           >
-            <HugeiconsIcon icon={Logout01Icon} size={17} />
+            <Icon name="door-exit" size={17} />
           </button>
         </div>
       </div>

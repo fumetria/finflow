@@ -4,9 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { isAxiosError } from 'axios';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { Mail01Icon, LockPasswordIcon } from '@hugeicons/core-free-icons';
-
+import { Icon } from '@/components/icon/Icon';
 import { loginSchema } from './LoginSchema';
 import type { LoginFormFormData } from './LoginSchema';
 import { useAuth } from './AuthContext';
@@ -96,7 +94,7 @@ export default function LoginPage() {
                   autoComplete="email"
                   placeholder={t('Email_placeholder')}
                   aria-invalid={!!errors.email}
-                  icon={<HugeiconsIcon icon={Mail01Icon} size={18} strokeWidth={1.8} />}
+                  icon={<Icon name="mail" size={18} />}
                   {...register('email')}
                 />
                 {errors.email && <p className="text-[12px] text-expense">{t(errors.email.message!)}</p>}
@@ -120,7 +118,7 @@ export default function LoginPage() {
                   autoComplete={isLogin ? 'current-password' : 'new-password'}
                   placeholder="••••••••"
                   aria-invalid={!!errors.password}
-                  icon={<HugeiconsIcon icon={LockPasswordIcon} size={18} strokeWidth={1.8} />}
+                  icon={<Icon name="lock" size={18} />}
                   {...register('password')}
                 />
                 {errors.password && (

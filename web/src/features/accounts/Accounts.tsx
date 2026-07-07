@@ -3,9 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { isAxiosError } from 'axios';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { PlusSignIcon, Wallet01Icon, PencilEdit02Icon, BankIcon, Coins01Icon } from '@hugeicons/core-free-icons';
-
+import { Icon } from '@/components/icon/Icon';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -85,7 +83,7 @@ export default function Accounts() {
           <p className="text-sm text-muted-foreground">{t('Accounts_subtitle')}</p>
         </div>
         <Button size="sm" onClick={() => setEditing({ account: null })}>
-          <HugeiconsIcon icon={PlusSignIcon} size={16} />
+          <Icon name="add" size={16} />
           {t('Accounts_new')}
         </Button>
       </div>
@@ -117,8 +115,8 @@ export default function Accounts() {
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                          <HugeiconsIcon
-                            icon={account.type === 'bank' ? BankIcon : Coins01Icon}
+                          <Icon
+                            name={account.type === 'bank' ? 'library' : 'money'}
                             size={14}
                           />
                           {t(`Accounts_type_${account.type}`)}
@@ -134,7 +132,7 @@ export default function Accounts() {
                           aria-label={t('Accounts_edit')}
                           onClick={() => setEditing({ account })}
                         >
-                          <HugeiconsIcon icon={PencilEdit02Icon} size={16} />
+                          <Icon name="edit" size={16} />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -306,12 +304,12 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
     <Card className="items-center py-12 text-center">
       <CardContent className="flex flex-col items-center gap-3">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <HugeiconsIcon icon={Wallet01Icon} size={22} />
+          <Icon name="wallet" size={22} />
         </span>
         <p className="text-sm font-medium text-foreground">{t('Accounts_empty_title')}</p>
         <p className="max-w-xs text-xs text-muted-foreground">{t('Accounts_empty_subtitle')}</p>
         <Button size="sm" onClick={onCreate}>
-          <HugeiconsIcon icon={PlusSignIcon} size={16} />
+          <Icon name="add" size={16} />
           {t('Accounts_new')}
         </Button>
       </CardContent>

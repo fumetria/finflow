@@ -190,4 +190,16 @@ body {
   option {
     @apply bg-popover text-popover-foreground;
   }
+
+  /* Duotone icon set (see components/icon/Icon.tsx). Both layers derive from the
+     inherited text color: the secondary (foreground detail) at full strength and
+     the primary (backing shape) dimmed, which produces the two-tone look while
+     still responding to any `text-*` utility. */
+  .finflow-icon .secondary {
+    fill: currentColor;
+  }
+  .finflow-icon .primary {
+    fill: currentColor;
+    opacity: 0.38;
+  }
 }
