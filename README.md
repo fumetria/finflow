@@ -45,12 +45,15 @@ proyectado de cada cuenta y el desglose de gastos por categoría.
 - Documentación interactiva de la API con Swagger/OpenAPI, generada desde los esquemas Zod
   (una única fuente de verdad para validación y documentación).
 - Interfaz internacionalizada (español / inglés) y tema claro, oscuro o de sistema.
+- Sistema de iconos duotono propio: SVG inline coloreados con `currentColor`, sin librerías
+  de iconos externas.
 
 ## Stack tecnológico
 
 **Frontend** (`web/`)
 - React 19 + Vite 8 + TypeScript
-- Tailwind CSS v4, shadcn/ui sobre Radix, iconos Hugeicons
+- Tailwind CSS v4, shadcn/ui sobre Radix
+- Sistema de iconos duotono propio (SVG inline, sin dependencias externas)
 - react-router v7 (data router)
 - React Hook Form + Zod para formularios y validación
 - axios como cliente HTTP (carga de datos con `useEffect` / `useState`)
@@ -216,6 +219,34 @@ En el despliegue Docker las migraciones las aplica el servicio `migrate` mediant
 `api/src/migrate.ts`, que solo necesita `DATABASE_URL`.
 
 No hay script de datos de ejemplo: los datos se crean desde la propia interfaz.
+
+## Sistema de iconos
+
+El frontend usa un set de iconos **duotono propio**, sin depender de ninguna librería de
+iconos externa. Cada glifo es un SVG con dos capas (`.primary` y `.secondary`) que heredan
+el color de texto actual, de modo que las utilidades `text-*` de Tailwind tiñen los iconos
+como a cualquier SVG inline.
+
+- **Fuente**: los SVG originales viven en `extra/icons/` (unos 200 iconos), junto a
+  `extra/icons/icons-data.js` (agregado autogenerado) y un `index.html` de previsualización.
+- **Generación**: de ahí se genera `web/src/components/icon/icons.gen.ts`, que exporta el
+  mapa `ICON_PATHS` y el tipo `IconName` (unión de todos los nombres disponibles). Es un
+  archivo autogenerado: no se edita a mano.
+- **Componente**: `web/src/components/icon/Icon.tsx` expone `<Icon name size title className />`.
+  Renderiza un SVG `viewBox="0 0 24 24"` con la clase `.finflow-icon`; si se pasa `title` es
+  accesible (`role="img"` + `aria-label`), y si no, se marca como decorativo (`aria-hidden`).
+- **Color duotono**: las reglas `.finflow-icon .primary` / `.secondary` en `web/src/index.css`
+  aplican `fill: currentColor`; la capa primaria (forma de fondo) va atenuada (`opacity: 0.38`)
+  y la secundaria (detalle) a plena intensidad, lo que produce el efecto de dos tonos con un
+  único color.
+
+Uso típico:
+
+```tsx
+import { Icon } from '@/components/icon/Icon';
+
+<Icon name="wallet" size={20} className="text-brand" title="Cuentas" />
+```
 
 ## Observabilidad
 
