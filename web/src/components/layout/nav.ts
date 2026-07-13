@@ -16,10 +16,12 @@ export const NAV: NavEntry[] = [
   { to: '/loans', labelKey: 'Nav_loans', icon: 'library' },
 ];
 
-// Primary destinations shown in the mobile bottom bar (the rest live behind "More").
+// Destinations shown in the mobile bottom bar. The full nav (incl. categories,
+// theme and logout) lives in the drawer, opened from the Topbar hamburger.
 export const BOTTOM_NAV: NavEntry[] = [
   { to: '/dashboard', labelKey: 'Nav_dashboard', icon: 'dashboard' },
   { to: '/accounts', labelKey: 'Nav_accounts', icon: 'wallet' },
   { to: '/expenses', labelKey: 'Nav_expenses', icon: 'receipt' },
+  { to: '/recurring', labelKey: 'Nav_recurring', icon: 'refresh' },
   { to: '/loans', labelKey: 'Nav_loans', icon: 'library' },
 ];
