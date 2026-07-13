@@ -34,7 +34,7 @@ function detectSystemLanguage(): string {
     ? navigator.languages
     : [navigator.language];
   for (const lang of candidates) {
-    const base = lang.split('-')[0];
+    const base = lang.split('-')[0] ?? lang;
     if ((SUPPORTED_LANGUAGES as readonly string[]).includes(base)) return base;
   }
   return 'es';
