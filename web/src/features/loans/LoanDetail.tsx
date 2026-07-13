@@ -82,7 +82,7 @@ function LoanDetailView({ id }: { id: string | undefined }) {
   }, [data]);
 
   return (
-    <div className="mx-auto max-w-5xl px-7 py-6">
+    <div className="mx-auto max-w-7xl px-7 py-6">
       <Button asChild variant="ghost" size="sm" className="-ml-2 mb-3 text-muted-foreground">
         <Link to="/loans">
           <Icon name="arrow-thin-left-circle" size={16} />

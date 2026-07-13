@@ -71,7 +71,7 @@ export default function Categories() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-7 py-6">
+    <div className="mx-auto max-w-7xl px-7 py-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-xl font-semibold tracking-tight">
