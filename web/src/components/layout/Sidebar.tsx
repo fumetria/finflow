@@ -100,7 +100,7 @@ export default function Sidebar() {
             [
               { value: 'light', icon: 'light', labelKey: 'Topbar_theme_light' },
               { value: 'dark', icon: 'moon', labelKey: 'Topbar_theme_dark' },
-              { value: 'system', icon: 'monitor', labelKey: 'Topbar_theme_system' },
+              { value: 'system', icon: 'desktop', labelKey: 'Topbar_theme_system' },
             ] as const
           ).map(({ value, icon, labelKey }) => (
             <button
