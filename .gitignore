@@ -7,7 +7,7 @@ dist/
 build/
 *.tsbuildinfo
 
-# Env files (NUNCA commitear secretos)
+# Env files
 .env
 .env.local
 .env.*.local
@@ -40,3 +40,4 @@ coverage/
 .pnpm-debug.log*
 
 extra/
+nextjs_version/    
