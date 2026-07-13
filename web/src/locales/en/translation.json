@@ -35,6 +35,8 @@
   "Nav_categories": "Categories",
   "Nav_recurring": "Recurring",
   "Nav_loans": "Loans",
+  "Nav_more": "More",
+  "Nav_menu": "Menu",
   "Dashboard_title": "Projection",
   "Dashboard_header_date": "{{date}} · overview",
   "Dashboard_date_label": "Projection to",

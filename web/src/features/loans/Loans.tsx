@@ -109,8 +109,8 @@ export default function Loans() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-7 py-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-7">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-xl font-semibold tracking-tight">{t('Loans_title')}</h1>
           <p className="text-sm text-muted-foreground">{t('Loans_subtitle')}</p>
@@ -146,7 +146,68 @@ export default function Loans() {
         ) : loans.length === 0 ? (
           <EmptyState onCreate={() => setCreating(true)} />
         ) : (
-          <Card>
+          <>
+            {/* Mobile: stacked cards */}
+            <div className="flex flex-col gap-2.5 md:hidden">
+              {loans.map((loan) => {
+                const account = accountsById.get(loan.accountId);
+                return (
+                  <Card
+                    key={loan.id}
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/loans/${loan.id}`)}
+                  >
+                    <CardContent className="flex flex-col gap-3 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-foreground">
+                            {loan.concept}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {account?.name ?? (
+                              <span className="italic">{t('Loans_account_unknown')}</span>
+                            )}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            'inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[11px] font-medium',
+                            STATUS_STYLES[loan.status],
+                          )}
+                        >
+                          {t(`Loans_status_${loan.status}`)}
+                        </span>
+                      </div>
+                      <div className="flex items-end justify-between gap-3">
+                        <div className="text-xs text-muted-foreground">
+                          {Number(loan.annualRate)}% ·{' '}
+                          {t('Loans_months', { count: loan.termMonths })}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="tabular-nums font-medium text-foreground">
+                            {formatCurrency(loan.principal, account?.currency ?? 'EUR')}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={t('Loans_delete')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleting(loan);
+                            }}
+                          >
+                            <Icon name="trash" size={16} />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Desktop: table */}
+            <Card className="hidden md:block">
             <CardContent className="px-0 py-0">
               <Table>
                 <TableHeader>
@@ -215,7 +276,8 @@ export default function Loans() {
                 </TableBody>
               </Table>
             </CardContent>
-          </Card>
+            </Card>
+          </>
         )}
       </div>
 
@@ -391,7 +453,7 @@ function LoanDialog({
               )}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <div className="flex flex-1 flex-col gap-1.5">
                 <Label htmlFor="principal">{t('Loans_col_principal')}</Label>
                 <Input
@@ -426,7 +488,7 @@ function LoanDialog({
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <div className="flex w-32 flex-col gap-1.5">
                 <Label htmlFor="termMonths">{t('Loans_term_label')}</Label>
                 <Input

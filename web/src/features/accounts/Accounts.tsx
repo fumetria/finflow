@@ -74,8 +74,8 @@ export default function Accounts() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-7 py-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-7">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-xl font-semibold tracking-tight">
             {t('Accounts_title')}
@@ -96,7 +96,42 @@ export default function Accounts() {
         ) : accounts.length === 0 ? (
           <EmptyState onCreate={() => setEditing({ account: null })} />
         ) : (
-          <Card>
+          <>
+            {/* Mobile: stacked cards */}
+            <div className="flex flex-col gap-2.5 md:hidden">
+              {accounts.map((account) => (
+                <Card key={account.id}>
+                  <CardContent className="flex items-center justify-between gap-3 p-4">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-foreground">{account.name}</p>
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Icon
+                          name={account.type === 'bank' ? 'library' : 'money'}
+                          size={13}
+                        />
+                        {t(`Accounts_type_${account.type}`)}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <span className="tabular-nums font-medium text-foreground">
+                        {formatCurrency(account.currentBalance, account.currency)}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t('Accounts_edit')}
+                        onClick={() => setEditing({ account })}
+                      >
+                        <Icon name="edit" size={16} />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <Card className="hidden md:block">
             <CardContent className="px-0 py-0">
               <Table>
                 <TableHeader>
@@ -140,7 +175,8 @@ export default function Accounts() {
                 </TableBody>
               </Table>
             </CardContent>
-          </Card>
+            </Card>
+          </>
         )}
       </div>
 
@@ -224,7 +260,7 @@ function AccountDialog({
             {errors.name && <p className="text-[12px] text-expense">{t(errors.name.message!)}</p>}
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <div className="flex flex-1 flex-col gap-1.5">
               <Label htmlFor="type">{t('Accounts_col_type')}</Label>
               <select
