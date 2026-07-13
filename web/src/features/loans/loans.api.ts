@@ -49,6 +49,15 @@ export type LoanInput = {
   notes?: string | null;
 };
 
+export type LoanReviseInput = {
+  concept: string;
+  entityId?: string | null;
+  notes?: string | null;
+  annualRate: number;
+  outstandingCapital: number;
+  remainingTerm: number;
+};
+
 // GET /loans
 export async function fetchLoans(): Promise<Loan[]> {
   const { data } = await api.get<{ userLoans: Loan[] }>('/loans');
@@ -73,6 +82,20 @@ export async function createLoan(input: LoanInput): Promise<string> {
 export async function updateLoanAccount(id: string, accountId: string): Promise<Loan> {
   const { data } = await api.patch<{ loan: Loan }>(`/loans/${id}`, { accountId });
   return data.loan;
+}
+
+// PUT /loans/:id — revise a loan: re-amortizes the pending installments from the
+// new capital/rate/term while keeping paid installments. Returns the updated
+// loan with its full (recalculated) schedule.
+export async function reviseLoan(id: string, input: LoanReviseInput): Promise<LoanDetail> {
+  const { data } = await api.put<LoanDetail>(`/loans/${id}`, input);
+  return data;
+}
+
+// DELETE /loans/:id — delete a loan and its installments; pending materialized
+// expenses are removed, paid ones are kept as history.
+export async function deleteLoan(id: string): Promise<void> {
+  await api.delete(`/loans/${id}`);
 }
 
 // POST /loans/materialize — turn upcoming installments into pending expenses.

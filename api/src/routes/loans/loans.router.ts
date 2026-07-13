@@ -6,8 +6,10 @@ import {
   findLoanById,
   materializeLoanInstallments,
   updateLoanAccount,
+  reviseLoan,
+  deleteLoan,
 } from './loans.service.js';
-import { createLoanSchema, updateLoanAccountSchema } from './loans.schema.js';
+import { createLoanSchema, updateLoanAccountSchema, reviseLoanSchema } from './loans.schema.js';
 
 const router = Router();
 
@@ -55,6 +57,25 @@ router.patch('/:id', async (req, res, next) => {
     const body = updateLoanAccountSchema.parse(req.body);
     const loan = await updateLoanAccount(req.user.sub, req.params.id, body.accountId);
     return res.status(200).json({ loan });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.put('/:id', async (req, res, next) => {
+  try {
+    const body = reviseLoanSchema.parse(req.body);
+    const result = await reviseLoan(req.user.sub, req.params.id, body);
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const result = await deleteLoan(req.user.sub, req.params.id);
+    return res.status(200).json(result);
   } catch (error) {
     next(error);
   }

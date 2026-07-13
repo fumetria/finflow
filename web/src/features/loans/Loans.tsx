@@ -32,6 +32,7 @@ import { loanSchema, type LoanFormData } from './loan.schema';
 import {
   fetchLoans,
   createLoan,
+  deleteLoan,
   materializeLoans,
   type Loan,
   type LoanStatus,
@@ -60,6 +61,7 @@ export default function Loans() {
   const [error, setError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<Loan | null>(null);
   const [materializing, setMaterializing] = useState(false);
   const [matResult, setMatResult] = useState<number | null>(null);
 
@@ -155,6 +157,7 @@ export default function Loans() {
                     <TableHead className="text-right">{t('Loans_col_rate')}</TableHead>
                     <TableHead className="text-right">{t('Loans_col_term')}</TableHead>
                     <TableHead>{t('Loans_col_status')}</TableHead>
+                    <TableHead className="pr-4 text-right">{t('Loans_col_actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -193,6 +196,19 @@ export default function Loans() {
                             {t(`Loans_status_${loan.status}`)}
                           </span>
                         </TableCell>
+                        <TableCell className="pr-4 text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={t('Loans_delete')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleting(loan);
+                            }}
+                          >
+                            <Icon name="trash" size={16} />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -210,7 +226,66 @@ export default function Loans() {
           onCreated={(id) => navigate(`/loans/${id}`)}
         />
       )}
+
+      {deleting && (
+        <DeleteLoanDialog
+          loan={deleting}
+          onClose={() => setDeleting(null)}
+          onDeleted={() => {
+            setDeleting(null);
+            reload();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function DeleteLoanDialog({
+  loan,
+  onClose,
+  onDeleted,
+}: {
+  loan: Loan;
+  onClose: () => void;
+  onDeleted: () => void;
+}) {
+  const { t } = useTranslation();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
+
+  async function handleDelete() {
+    setBusy(true);
+    setError(false);
+    try {
+      await deleteLoan(loan.id);
+      onDeleted();
+    } catch {
+      setError(true);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t('Loans_delete_title')}</DialogTitle>
+          <DialogDescription>
+            {t('Loans_delete_confirm', { concept: loan.concept })}
+          </DialogDescription>
+        </DialogHeader>
+        {error && <p className="text-[13px] text-expense">{t('Loans_error_delete')}</p>}
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t('Loans_cancel')}
+          </Button>
+          <Button type="button" variant="destructive" disabled={busy} onClick={handleDelete}>
+            {t('Loans_delete')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

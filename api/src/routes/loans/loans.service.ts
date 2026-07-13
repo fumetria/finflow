@@ -1,6 +1,6 @@
 import { db, loans, loanInstallments, expenses, accounts } from '../../db/index.js';
-import { buildAmortizationSchedule } from './loans.amortization.js';
-import type { CreateLoan } from './loans.schema.js';
+import { buildAmortizationSchedule, addMonthsUTC } from './loans.amortization.js';
+import type { CreateLoan, ReviseLoan } from './loans.schema.js';
 import { eq, and, asc, lte, isNull, inArray, isNotNull } from 'drizzle-orm';
 import { AppError } from '../../middlewares/errorHandler.js';
 
@@ -140,6 +140,167 @@ export async function updateLoanAccount(userId: string, id: string, accountId: s
 
     return loan;
   });
+}
+
+// Revise a loan: recalculate the pending tail of the amortization schedule while
+// keeping already-paid installments (and their expenses) untouched — they are
+// real history that already moved the account balance.
+//
+// The pending installments are rebuilt from `outstandingCapital` at the new
+// `annualRate` over `remainingTerm` months, anchored to the original calendar so
+// due dates stay aligned. Lowering the capital models an early contribution;
+// lowering the term shortens the loan (vs. lowering the installment). Any pending
+// installment already materialized into a (still pending) expense is discarded
+// and its expense deleted — no balance was touched, so no recalculation needed.
+// Runs in one transaction.
+export async function reviseLoan(userId: string, id: string, data: ReviseLoan) {
+  const [loan] = await db
+    .select()
+    .from(loans)
+    .where(and(eq(loans.userId, userId), eq(loans.id, id)));
+  if (!loan) {
+    throw new AppError('LOAN_NOT_FOUND', 'Not found any loan with this id', 404);
+  }
+
+  const installments = await db
+    .select()
+    .from(loanInstallments)
+    .where(and(eq(loanInstallments.userId, userId), eq(loanInstallments.loanId, id)))
+    .orderBy(asc(loanInstallments.number));
+
+  const paidCount = installments.filter((it) => it.status === 'paid').length;
+  const metadata = {
+    concept: data.concept,
+    entityId: data.entityId ?? null,
+    notes: data.notes ?? null,
+  };
+
+  // Fully-paid loan (no pending tail): only metadata can change.
+  if (paidCount === installments.length) {
+    const [updated] = await db
+      .update(loans)
+      .set(metadata)
+      .where(and(eq(loans.userId, userId), eq(loans.id, id)))
+      .returning();
+    const rows = await db
+      .select()
+      .from(loanInstallments)
+      .where(and(eq(loanInstallments.userId, userId), eq(loanInstallments.loanId, id)))
+      .orderBy(asc(loanInstallments.number));
+    return { loan: updated, installments: rows };
+  }
+
+  const anchor = addMonthsUTC(new Date(loan.startDate), paidCount);
+  const schedule = buildAmortizationSchedule({
+    principal: data.outstandingCapital,
+    annualRate: data.annualRate,
+    termMonths: data.remainingTerm,
+    startDate: anchor,
+  });
+
+  return db.transaction(async (tx) => {
+    // Discard the still-pending materialized expenses of this loan.
+    const pendingInstallments = installments.filter((it) => it.status === 'pending');
+    const pendingExpenseIds = pendingInstallments
+      .map((it) => it.expenseId)
+      .filter((expenseId): expenseId is string => expenseId !== null);
+    if (pendingExpenseIds.length > 0) {
+      await tx
+        .delete(expenses)
+        .where(and(eq(expenses.userId, userId), inArray(expenses.id, pendingExpenseIds)));
+    }
+
+    // Drop the old pending installments and rebuild the tail.
+    await tx
+      .delete(loanInstallments)
+      .where(
+        and(
+          eq(loanInstallments.userId, userId),
+          eq(loanInstallments.loanId, id),
+          eq(loanInstallments.status, 'pending'),
+        ),
+      );
+
+    await tx.insert(loanInstallments).values(
+      schedule.map((entry) => ({
+        userId,
+        loanId: id,
+        number: paidCount + entry.number,
+        dueDate: entry.dueDate,
+        amount: entry.amount.toString(),
+        principalComponent: entry.principalComponent.toString(),
+        interestComponent: entry.interestComponent.toString(),
+        remainingBalance: entry.remainingBalance.toString(),
+      })),
+    );
+
+    const [updated] = await tx
+      .update(loans)
+      .set({
+        ...metadata,
+        annualRate: data.annualRate.toString(),
+        termMonths: paidCount + data.remainingTerm,
+        // With no paid history the principal simply becomes the new amount;
+        // otherwise the original borrowed principal is preserved as history.
+        ...(paidCount === 0 ? { principal: data.outstandingCapital.toString() } : {}),
+      })
+      .where(and(eq(loans.userId, userId), eq(loans.id, id)))
+      .returning();
+
+    const rows = await tx
+      .select()
+      .from(loanInstallments)
+      .where(and(eq(loanInstallments.userId, userId), eq(loanInstallments.loanId, id)))
+      .orderBy(asc(loanInstallments.number));
+
+    return { loan: updated, installments: rows };
+  });
+}
+
+// Delete a loan and its installments (cascade). Still-pending materialized
+// expenses are removed (no balance impact); already-paid expenses are kept as
+// history and the account balance is left untouched.
+export async function deleteLoan(userId: string, id: string) {
+  const [loan] = await db
+    .select({ id: loans.id })
+    .from(loans)
+    .where(and(eq(loans.userId, userId), eq(loans.id, id)));
+  if (!loan) {
+    throw new AppError('LOAN_NOT_FOUND', 'Not found any loan with this id', 404);
+  }
+
+  await db.transaction(async (tx) => {
+    const linked = await tx
+      .select({ expenseId: loanInstallments.expenseId })
+      .from(loanInstallments)
+      .where(
+        and(
+          eq(loanInstallments.userId, userId),
+          eq(loanInstallments.loanId, id),
+          isNotNull(loanInstallments.expenseId),
+        ),
+      );
+    const expenseIds = linked
+      .map((row) => row.expenseId)
+      .filter((expenseId): expenseId is string => expenseId !== null);
+
+    if (expenseIds.length > 0) {
+      await tx
+        .delete(expenses)
+        .where(
+          and(
+            eq(expenses.userId, userId),
+            inArray(expenses.id, expenseIds),
+            eq(expenses.status, 'pending'),
+          ),
+        );
+    }
+
+    // Cascade on loan_installments.loanId removes the installments.
+    await tx.delete(loans).where(and(eq(loans.userId, userId), eq(loans.id, id)));
+  });
+
+  return { ok: true };
 }
 
 // Materialize loan installments into expenses, idempotently.

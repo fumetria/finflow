@@ -15,7 +15,11 @@ import {
   updateRecurringRuleSchema,
 } from '../routes/recurring_rules/recurringRules.schema.js';
 import { forecastQuerySchema } from '../routes/forecast/forecast.schema.js';
-import { createLoanSchema, updateLoanAccountSchema } from '../routes/loans/loans.schema.js';
+import {
+  createLoanSchema,
+  updateLoanAccountSchema,
+  reviseLoanSchema,
+} from '../routes/loans/loans.schema.js';
 import {
   createExpenseCategorySchema,
   updateExpenseCategorySchema,
@@ -358,6 +362,27 @@ export const openApiDocument = createDocument({
         requestBody: json(updateLoanAccountSchema),
         responses: {
           '200': { description: 'Updated', ...json(z.object({ loan: loanSchema })) },
+          ...authErrors,
+          ...notFound,
+        },
+      },
+      put: {
+        tags: ['Loans'],
+        summary: 'Revise a loan: re-amortize the pending tail (rate/capital/term)',
+        requestParams: { path: idParam },
+        requestBody: json(reviseLoanSchema),
+        responses: {
+          '200': { description: 'Revised', ...json(loanWithInstallmentsSchema) },
+          ...authErrors,
+          ...notFound,
+        },
+      },
+      delete: {
+        tags: ['Loans'],
+        summary: 'Delete a loan (keeps paid expenses as history)',
+        requestParams: { path: idParam },
+        responses: {
+          '200': { description: 'Deleted', ...json(z.object({ ok: z.boolean() })) },
           ...authErrors,
           ...notFound,
         },

@@ -30,7 +30,7 @@ function lastDayOfMonth(year: number, month: number) {
 
 // Add `months` to a UTC calendar date, clamping the day to the target month's
 // last day (e.g. Jan 31 + 1 month → Feb 28/29).
-function addMonthsUTC(date: Date, months: number): Date {
+export function addMonthsUTC(date: Date, months: number): Date {
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth();
   const day = date.getUTCDate();
