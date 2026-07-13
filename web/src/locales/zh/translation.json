@@ -286,6 +286,7 @@
   "Loans_error_delete": "我们无法删除该贷款，请重试。",
   "Topbar_search": "搜索…",
   "Topbar_language": "语言",
+  "Topbar_lang_system": "跟随系统",
   "Topbar_lang_es": "Español",
   "Topbar_lang_en": "English",
   "Topbar_lang_zh": "简体中文",

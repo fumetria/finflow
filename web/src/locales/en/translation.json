@@ -286,6 +286,7 @@
   "Loans_error_delete": "We couldn't delete the loan. Please try again.",
   "Topbar_search": "Search…",
   "Topbar_language": "Language",
+  "Topbar_lang_system": "System",
   "Topbar_lang_es": "Español",
   "Topbar_lang_en": "English",
   "Topbar_lang_zh": "简体中文",
