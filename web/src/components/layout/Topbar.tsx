@@ -12,6 +12,9 @@ const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': 'Nav_dashboard',
   '/accounts': 'Nav_accounts',
   '/expenses': 'Nav_expenses',
+  '/categories': 'Nav_categories',
+  '/recurring': 'Nav_recurring',
+  '/loans': 'Nav_loans',
 };
 
 // localStorage key i18next-browser-languagedetector caches the choice under.
@@ -40,7 +43,7 @@ function detectSystemLanguage(): string {
   return 'es';
 }
 
-export default function Topbar() {
+export default function Topbar({ onOpenNav }: { onOpenNav?: () => void }) {
   const { t, i18n } = useTranslation();
   const { pathname } = useLocation();
   const titleKey = ROUTE_TITLES[pathname];
@@ -65,11 +68,20 @@ export default function Topbar() {
   }
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-7">
-      <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
-        <span>finflow</span>
-        <Icon name="chevron-right" size={14} />
-        <span className="font-medium text-foreground">
+    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4 md:px-7">
+      <div className="flex min-w-0 items-center gap-2 text-[13px] text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="-ml-1 md:hidden"
+          aria-label={t('Nav_menu')}
+          onClick={onOpenNav}
+        >
+          <Icon name="menu" size={20} />
+        </Button>
+        <span className="hidden sm:inline">finflow</span>
+        <Icon name="chevron-right" size={14} className="hidden sm:inline" />
+        <span className="truncate font-medium text-foreground">
           {titleKey ? t(titleKey) : ''}
         </span>
       </div>

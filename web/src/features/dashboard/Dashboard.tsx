@@ -97,7 +97,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-7 py-6">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-7">
       <section className='flex justify-between items-center'>
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-xl font-semibold tracking-tight">

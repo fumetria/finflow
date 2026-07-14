@@ -35,6 +35,7 @@
   "Nav_categories": "分类",
   "Nav_recurring": "周期性",
   "Nav_loans": "贷款",
+  "Nav_menu": "菜单",
   "Dashboard_title": "预测",
   "Dashboard_header_date": "{{date}} · 概览",
   "Dashboard_date_label": "预测至",

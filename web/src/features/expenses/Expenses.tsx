@@ -130,7 +130,7 @@ export default function Expenses() {
   const FILTERS: StatusFilter[] = ['all', 'pending', 'paid'];
 
   return (
-    <div className="mx-auto max-w-7xl px-7 py-6">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-7">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-xl font-semibold tracking-tight">
@@ -169,34 +169,51 @@ export default function Expenses() {
             onCreate={() => setEditing({ expense: null })}
           />
         ) : (
-          <Card>
-            <CardContent className="px-0 py-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="pl-4">{t('Expenses_col_concept')}</TableHead>
-                    <TableHead>{t('Expenses_col_account')}</TableHead>
-                    <TableHead>{t('Expenses_col_due')}</TableHead>
-                    <TableHead className="text-right">{t('Expenses_col_amount')}</TableHead>
-                    <TableHead>{t('Expenses_col_status')}</TableHead>
-                    <TableHead className="pr-4 text-right">{t('Expenses_col_actions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {visible.map((expense) => (
-                    <ExpenseRow
-                      key={expense.id}
-                      expense={expense}
-                      account={accountsById.get(expense.accountId)}
-                      paying={paying === expense.id}
-                      onEdit={() => setEditing({ expense })}
-                      onPay={() => handlePay(expense.id)}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <>
+            {/* Mobile: stacked cards */}
+            <div className="flex flex-col gap-2.5 md:hidden">
+              {visible.map((expense) => (
+                <ExpenseCard
+                  key={expense.id}
+                  expense={expense}
+                  account={accountsById.get(expense.accountId)}
+                  paying={paying === expense.id}
+                  onEdit={() => setEditing({ expense })}
+                  onPay={() => handlePay(expense.id)}
+                />
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <Card className="hidden md:block">
+              <CardContent className="px-0 py-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="pl-4">{t('Expenses_col_concept')}</TableHead>
+                      <TableHead>{t('Expenses_col_account')}</TableHead>
+                      <TableHead>{t('Expenses_col_due')}</TableHead>
+                      <TableHead className="text-right">{t('Expenses_col_amount')}</TableHead>
+                      <TableHead>{t('Expenses_col_status')}</TableHead>
+                      <TableHead className="pr-4 text-right">{t('Expenses_col_actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {visible.map((expense) => (
+                      <ExpenseRow
+                        key={expense.id}
+                        expense={expense}
+                        account={accountsById.get(expense.accountId)}
+                        paying={paying === expense.id}
+                        onEdit={() => setEditing({ expense })}
+                        onPay={() => handlePay(expense.id)}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </>
         )}
       </div>
 
@@ -281,6 +298,78 @@ function ExpenseRow({
         )}
       </TableCell>
     </TableRow>
+  );
+}
+
+function ExpenseCard({
+  expense,
+  account,
+  paying,
+  onEdit,
+  onPay,
+}: {
+  expense: Expense;
+  account: Account | undefined;
+  paying: boolean;
+  onEdit: () => void;
+  onPay: () => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const formatCurrency = useCurrencyFormatter();
+  const currency = account?.currency ?? 'EUR';
+  const isPending = expense.status === 'pending';
+
+  const dueLabel = new Intl.DateTimeFormat(i18n.language, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(expense.dueDate));
+
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-3 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate font-medium text-foreground">{expense.concept}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {account?.name ?? (
+                <span className="italic">{t('Expenses_account_unknown')}</span>
+              )}{' '}
+              · {dueLabel}
+            </p>
+          </div>
+          <span className="shrink-0 tabular-nums font-medium text-expense">
+            −{formatCurrency(expense.amount, currency)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 text-[11px] font-medium',
+              isPending ? 'bg-warning/10 text-warning' : 'bg-income/10 text-income',
+            )}
+          >
+            {!isPending && <Icon name="check" size={12} />}
+            {t(`Expenses_status_${expense.status}`)}
+          </span>
+          {isPending && (
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t('Expenses_edit')}
+                onClick={onEdit}
+              >
+                <Icon name="edit" size={16} />
+              </Button>
+              <Button size="sm" variant="outline" disabled={paying} onClick={onPay}>
+                {t('Expenses_mark_paid')}
+              </Button>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -396,7 +485,7 @@ function ExpenseDialog({
               )}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <div className="flex flex-1 flex-col gap-1.5">
                 <Label htmlFor="amount">{t('Expenses_col_amount')}</Label>
                 <Input

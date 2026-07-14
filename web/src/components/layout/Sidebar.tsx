@@ -1,34 +1,21 @@
 import { NavLink, useNavigate, Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
-import { Icon, type IconName } from '@/components/icon/Icon';
+import { Icon } from '@/components/icon/Icon';
 import { BrandMark } from '@/components/BrandMark';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useTheme } from '@/features/theme/ThemeContext';
 import { cn } from '@/lib/utils';
+import { NAV, type NavEntry } from './nav';
 
-type NavEntry = {
-  to: string;
-  labelKey: string;
-  icon: IconName;
-};
-
-const NAV: NavEntry[] = [
-  { to: '/dashboard', labelKey: 'Nav_dashboard', icon: 'dashboard' },
-  { to: '/accounts', labelKey: 'Nav_accounts', icon: 'wallet' },
-  { to: '/expenses', labelKey: 'Nav_expenses', icon: 'receipt' },
-  { to: '/categories', labelKey: 'Nav_categories', icon: 'tag' },
-  { to: '/recurring', labelKey: 'Nav_recurring', icon: 'refresh' },
-  { to: '/loans', labelKey: 'Nav_loans', icon: 'library' },
-];
-
-function NavItem({ entry }: { entry: NavEntry }) {
+function NavItem({ entry, onNavigate }: { entry: NavEntry; onNavigate?: () => void }) {
   const { t } = useTranslation();
   return (
     <NavLink
       to={entry.to}
+      onClick={onNavigate}
       className={({ isActive }) =>
         cn(
           'group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -55,7 +42,9 @@ function NavItem({ entry }: { entry: NavEntry }) {
   );
 }
 
-export default function Sidebar() {
+// The navigable content of the sidebar. Reused by the desktop <aside> and the
+// mobile drawer (Sheet). `onNavigate` lets the drawer close itself on tap.
+export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -65,12 +54,13 @@ export default function Sidebar() {
   const initials = email.slice(0, 2).toUpperCase() || '··';
 
   function handleLogout() {
+    onNavigate?.();
     logout();
     navigate('/login');
   }
 
   return (
-    <aside className="flex w-[244px] shrink-0 flex-col border-r border-border bg-card/40">
+    <>
       <div className="flex h-14 items-center gap-2.5 px-5">
         <BrandMark size={28} />
         <span className="text-base font-semibold tracking-tight">finflow</span>
@@ -78,7 +68,7 @@ export default function Sidebar() {
 
       <div className="px-3 pt-2">
         <Button asChild className="w-full justify-start">
-          <Link to="/expenses?new=1">
+          <Link to="/expenses?new=1" onClick={onNavigate}>
             <Icon name="add" size={16} />
             {t('Nav_new_expense')}
           </Link>
@@ -90,7 +80,7 @@ export default function Sidebar() {
           {t('Nav_section_general')}
         </p>
         {NAV.map((entry) => (
-          <NavItem key={entry.to} entry={entry} />
+          <NavItem key={entry.to} entry={entry} onNavigate={onNavigate} />
         ))}
       </nav>
 
@@ -137,6 +127,14 @@ export default function Sidebar() {
           </button>
         </div>
       </div>
+    </>
+  );
+}
+
+export default function Sidebar() {
+  return (
+    <aside className="hidden w-[244px] shrink-0 flex-col border-r border-border bg-card/40 md:flex">
+      <SidebarContent />
     </aside>
   );
 }

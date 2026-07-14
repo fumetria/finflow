@@ -118,7 +118,7 @@ function LoanDetailView({ id }: { id: string | undefined }) {
   }, [data]);
 
   return (
-    <div className="mx-auto max-w-7xl px-7 py-6">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-7">
       <Button asChild variant="ghost" size="sm" className="-ml-2 mb-3 text-muted-foreground">
         <Link to="/loans">
           <Icon name="arrow-thin-left-circle" size={16} />
@@ -139,7 +139,7 @@ function LoanDetailView({ id }: { id: string | undefined }) {
         </Card>
       ) : (
         <>
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
               <h1 className="font-heading text-xl font-semibold tracking-tight">
                 {data.loan.concept}
@@ -209,7 +209,69 @@ function LoanDetailView({ id }: { id: string | undefined }) {
 
           {/* Amortization schedule */}
           <h2 className="mt-7 mb-3 font-heading text-sm font-semibold">{t('Loans_schedule')}</h2>
-          <Card>
+          {/* Mobile: stacked cards */}
+          <div className="flex flex-col gap-2.5 md:hidden">
+            {data.installments.map((it) => {
+              const paid = it.status === 'paid';
+              return (
+                <Card key={it.id}>
+                  <CardContent className="flex flex-col gap-2.5 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        #{it.number} · {dateFmt.format(new Date(it.dueDate))}
+                      </span>
+                      <span
+                        className={cn(
+                          'inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 text-[11px] font-medium',
+                          paid ? 'bg-income/10 text-income' : 'bg-muted text-muted-foreground',
+                        )}
+                      >
+                        {paid && <Icon name="check" size={12} />}
+                        {t(`Loans_inst_status_${it.status}`)}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-xs text-muted-foreground">
+                        {t('Loans_inst_amount')}
+                      </span>
+                      <span className="font-medium tabular-nums text-foreground">
+                        {formatCurrency(it.amount, currency)}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 border-t border-border pt-2 text-center">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          {t('Loans_inst_principal')}
+                        </span>
+                        <span className="text-xs tabular-nums">
+                          {formatCurrency(it.principalComponent, currency)}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          {t('Loans_inst_interest')}
+                        </span>
+                        <span className="text-xs tabular-nums">
+                          {formatCurrency(it.interestComponent, currency)}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          {t('Loans_inst_remaining')}
+                        </span>
+                        <span className="text-xs tabular-nums">
+                          {formatCurrency(it.remainingBalance, currency)}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Desktop: table */}
+          <Card className="hidden md:block">
             <CardContent className="px-0 py-0">
               <Table>
                 <TableHeader>
@@ -365,7 +427,7 @@ function LoanEditDialog({
             )}
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <div className="flex flex-1 flex-col gap-1.5">
               <Label htmlFor="edit-outstanding">{t('Loans_outstanding_label')}</Label>
               <Input

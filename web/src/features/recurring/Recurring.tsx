@@ -132,8 +132,8 @@ export default function Recurring() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-7 py-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-7">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-xl font-semibold tracking-tight">
             {t('Recurring_title')}
@@ -171,7 +171,87 @@ export default function Recurring() {
         ) : rules.length === 0 ? (
           <EmptyState onCreate={() => setEditing({ rule: null })} />
         ) : (
-          <Card>
+          <>
+            {/* Mobile: stacked cards */}
+            <div className="flex flex-col gap-2.5 md:hidden">
+              {rules.map((rule) => {
+                const account = accountsById.get(rule.accountId);
+                const active = rule.active ?? true;
+                return (
+                  <Card key={rule.id} className={cn(!active && 'opacity-55')}>
+                    <CardContent className="flex flex-col gap-3 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-foreground">
+                            {rule.concept}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {account?.name ?? (
+                              <span className="italic">
+                                {t('Recurring_account_unknown')}
+                              </span>
+                            )}{' '}
+                            · {t(`Recurring_freq_${rule.frequency}`)}
+                            {rule.frequency !== 'weekly' && rule.dayOfMonth
+                              ? ` · ${t('Recurring_day_short', { day: rule.dayOfMonth })}`
+                              : ''}
+                          </p>
+                        </div>
+                        <span className="shrink-0 tabular-nums font-medium text-expense">
+                          {rule.amount
+                            ? `−${formatCurrency(rule.amount, account?.currency ?? 'EUR')}`
+                            : '—'}
+                        </span>
+                      </div>
+                      {(rule.startDate || rule.endDate) && (
+                        <p className="text-xs text-muted-foreground">
+                          {rule.startDate ? dateFmt.format(new Date(rule.startDate)) : '—'}
+                          {rule.endDate
+                            ? ` → ${dateFmt.format(new Date(rule.endDate))}`
+                            : ''}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          disabled={togglingId === rule.id}
+                          onClick={() => handleToggle(rule)}
+                          className={cn(
+                            'inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 text-[11px] font-medium transition-colors disabled:opacity-50',
+                            active ? 'text-income' : 'text-muted-foreground',
+                          )}
+                          aria-label={t(active ? 'Recurring_pause' : 'Recurring_resume')}
+                        >
+                          <Icon name={active ? 'toggle-on' : 'toggle-off'} size={18} />
+                          {t(active ? 'Recurring_active' : 'Recurring_paused')}
+                        </button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={t('Recurring_edit')}
+                            onClick={() => setEditing({ rule })}
+                          >
+                            <Icon name="edit" size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={t('Recurring_delete')}
+                            onClick={() => setDeleting(rule)}
+                          >
+                            <Icon name="trash" size={16} />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Desktop: table */}
+            <Card className="hidden md:block">
             <CardContent className="px-0 py-0">
               <Table>
                 <TableHeader>
@@ -255,7 +335,8 @@ export default function Recurring() {
                 </TableBody>
               </Table>
             </CardContent>
-          </Card>
+            </Card>
+          </>
         )}
       </div>
 
@@ -408,7 +489,7 @@ function RuleDialog({
               )}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <div className="flex flex-1 flex-col gap-1.5">
                 <Label htmlFor="amount">{t('Recurring_col_amount')}</Label>
                 <Input
@@ -441,7 +522,7 @@ function RuleDialog({
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <div className="flex flex-1 flex-col gap-1.5">
                 <Label htmlFor="startDate">{t('Recurring_col_start')}</Label>
                 <Input
