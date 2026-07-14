@@ -43,6 +43,7 @@
   "Dashboard_preset_eom": "月末",
   "Dashboard_preset_1m": "+1 个月",
   "Dashboard_preset_3m": "+3 个月",
+  "Dashboard_accounts_title": "账户",
   "Dashboard_projected_to": "预测至 {{date}} 的余额",
   "Dashboard_projected": "预测余额",
   "Dashboard_current": "当前余额",

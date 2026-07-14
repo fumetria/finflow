@@ -162,7 +162,21 @@ export default function Dashboard() {
                 currency={data.totals.currency}
               />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Móvil: carrusel horizontal con título de sección */}
+            <div className="sm:hidden">
+              <h2 className="mb-2 font-heading text-sm font-medium">
+                {t('Dashboard_accounts_title')}
+              </h2>
+              <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 [scrollbar-width:none]">
+                {data.accounts.map((account) => (
+                  <div key={account.accountId} className="shrink-0 basis-[85%] snap-center">
+                    <AccountCard account={account} formatCurrency={formatCurrency} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Escritorio: grid (sin cambios) */}
+            <div className="hidden gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-3">
               {data.accounts.map((account) => (
                 <AccountCard
                   key={account.accountId}

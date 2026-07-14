@@ -43,6 +43,7 @@
   "Dashboard_preset_eom": "End of month",
   "Dashboard_preset_1m": "+1 month",
   "Dashboard_preset_3m": "+3 months",
+  "Dashboard_accounts_title": "Accounts",
   "Dashboard_projected_to": "Projected balance to {{date}}",
   "Dashboard_projected": "Projected",
   "Dashboard_current": "Current balance",

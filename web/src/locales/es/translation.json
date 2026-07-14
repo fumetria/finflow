@@ -43,6 +43,7 @@
   "Dashboard_preset_eom": "Fin de mes",
   "Dashboard_preset_1m": "+1 mes",
   "Dashboard_preset_3m": "+3 meses",
+  "Dashboard_accounts_title": "Cuentas",
   "Dashboard_projected_to": "Saldo proyectado al {{date}}",
   "Dashboard_projected": "Proyectado",
   "Dashboard_current": "Saldo actual",
