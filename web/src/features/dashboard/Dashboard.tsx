@@ -15,6 +15,14 @@ import {
   type ForecastResponse,
   type ForecastTotals,
 } from './forecast';
+import {
+  fetchExpenses,
+  markExpensePaid,
+  type Expense,
+} from '@/features/expenses/expenses.api';
+
+// Cuántos pagos pendientes más próximos mostrar en el dashboard.
+const UPCOMING_LIMIT = 5;
 
 function toInputValue(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -47,11 +55,13 @@ export default function Dashboard() {
 
   const [date, setDate] = useState(() => endOfMonth(0));
   const [reloadKey, setReloadKey] = useState(0);
+  const [paying, setPaying] = useState<string | null>(null);
   const [result, setResult] = useState<{
     key: string;
     data: ForecastResponse | null;
+    expenses: Expense[];
     error: boolean;
-  }>({ key: '', data: null, error: false });
+  }>({ key: '', data: null, expenses: [], error: false });
 
   // Identifies the request the effect should serve; changes on a new date or a
   // retry. `loading` is derived from it so we never setState in the effect body.
@@ -59,12 +69,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchForecast(date)
-      .then((res) => {
-        if (!cancelled) setResult({ key: requestKey, data: res, error: false });
+    Promise.all([fetchForecast(date), fetchExpenses()])
+      .then(([forecast, expenses]) => {
+        if (!cancelled) setResult({ key: requestKey, data: forecast, expenses, error: false });
       })
       .catch(() => {
-        if (!cancelled) setResult({ key: requestKey, data: null, error: true });
+        if (!cancelled) setResult({ key: requestKey, data: null, expenses: [], error: true });
       });
     return () => {
       cancelled = true;
@@ -74,6 +84,36 @@ export default function Dashboard() {
   const loading = result.key !== requestKey;
   const error = !loading && result.error;
   const data = loading ? null : result.data;
+
+  // Los N pagos pendientes con vencimiento más cercano (globales, no dependen de
+  // la fecha de proyección). Mismo criterio que la página de gastos.
+  const upcoming = useMemo(
+    () =>
+      result.expenses
+        .filter((e) => e.status === 'pending')
+        .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+        .slice(0, UPCOMING_LIMIT),
+    [result.expenses],
+  );
+
+  // Nombre y moneda por cuenta, tomados del forecast (ya trae accountId/name/currency).
+  const accountsById = useMemo(
+    () => new Map((data?.accounts ?? []).map((a) => [a.accountId, a])),
+    [data],
+  );
+
+  async function handlePay(id: string) {
+    setPaying(id);
+    try {
+      // Pagar altera balances y proyección: refrescamos forecast y gastos juntos.
+      await markExpensePaid(id);
+      setReloadKey((k) => k + 1);
+    } catch {
+      setReloadKey((k) => k + 1);
+    } finally {
+      setPaying(null);
+    }
+  }
 
   const todayLabel = useMemo(() => {
     const s = new Intl.DateTimeFormat(i18n.language, {
@@ -185,6 +225,39 @@ export default function Dashboard() {
                 />
               ))}
             </div>
+
+            {/* Próximos pagos: pendientes más cercanos, pagables sin salir del dashboard */}
+            <div className="mt-6">
+              <div className="mb-2 flex items-center justify-between">
+                <h2 className="font-heading text-sm font-medium">
+                  {t('Dashboard_upcoming_title')}
+                </h2>
+                <Button asChild size="xs" variant="ghost">
+                  <Link to="/expenses">{t('Dashboard_upcoming_view_all')}</Link>
+                </Button>
+              </div>
+              {upcoming.length === 0 ? (
+                <Card>
+                  <CardContent className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+                    <Icon name="check" size={16} />
+                    {t('Dashboard_upcoming_empty')}
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="flex flex-col gap-2.5">
+                  {upcoming.map((expense) => (
+                    <UpcomingRow
+                      key={expense.id}
+                      expense={expense}
+                      account={accountsById.get(expense.accountId)}
+                      paying={paying === expense.id}
+                      onPay={() => handlePay(expense.id)}
+                      formatCurrency={formatCurrency}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>
@@ -255,6 +328,53 @@ function AccountCard({
             {t('Dashboard_covered')}
           </div>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Una fila de "Próximos pagos": concepto, cuenta·vencimiento, importe y acción de
+// marcar pagado. Layout tomado de `ExpenseCard` en la página de gastos.
+function UpcomingRow({
+  expense,
+  account,
+  paying,
+  onPay,
+  formatCurrency,
+}: {
+  expense: Expense;
+  account: AccountForecast | undefined;
+  paying: boolean;
+  onPay: () => void;
+  formatCurrency: (amount: string, currency: string) => string;
+}) {
+  const { t, i18n } = useTranslation();
+  const currency = account?.currency ?? 'EUR';
+
+  const dueLabel = new Intl.DateTimeFormat(i18n.language, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(expense.dueDate));
+
+  return (
+    <Card>
+      <CardContent className="flex items-center justify-between gap-3 p-4">
+        <div className="min-w-0">
+          <p className="truncate font-medium text-foreground">{expense.concept}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {account?.name ?? <span className="italic">{t('Expenses_account_unknown')}</span>}{' '}
+            · {dueLabel}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="tabular-nums font-medium text-expense">
+            −{formatCurrency(expense.amount, currency)}
+          </span>
+          <Button size="sm" variant="outline" disabled={paying} onClick={onPay}>
+            {t('Expenses_mark_paid')}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -456,6 +576,16 @@ function ForecastSkeleton() {
             <div className="h-7 w-full animate-pulse rounded bg-muted" />
           </CardContent>
         </Card>
+        ))}
+      </div>
+      <div className="mt-6 flex flex-col gap-2.5">
+        <div className="h-4 w-28 animate-pulse rounded bg-muted" />
+        {[0, 1, 2].map((i) => (
+          <Card key={i}>
+            <CardContent className="p-4">
+              <div className="h-6 w-full animate-pulse rounded bg-muted" />
+            </CardContent>
+          </Card>
         ))}
       </div>
     </>
