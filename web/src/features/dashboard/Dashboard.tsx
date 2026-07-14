@@ -167,7 +167,7 @@ export default function Dashboard() {
               <h2 className="mb-2 font-heading text-sm font-medium">
                 {t('Dashboard_accounts_title')}
               </h2>
-              <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 [scrollbar-width:none]">
+              <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 py-1 [scrollbar-width:none]">
                 {data.accounts.map((account) => (
                   <div key={account.accountId} className="shrink-0 basis-[85%] snap-center">
                     <AccountCard account={account} formatCurrency={formatCurrency} />
