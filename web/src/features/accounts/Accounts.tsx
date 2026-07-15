@@ -27,6 +27,7 @@ import {
 import { useCurrencyFormatter } from '@/lib/currency';
 import { accountSchema, type AccountFormData } from './account.schema';
 import {
+  accountTypeIcon,
   fetchAccounts,
   createAccount,
   updateAccount,
@@ -105,10 +106,7 @@ export default function Accounts() {
                     <div className="min-w-0">
                       <p className="truncate font-medium text-foreground">{account.name}</p>
                       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Icon
-                          name={account.type === 'bank' ? 'library' : 'money'}
-                          size={13}
-                        />
+                        <Icon name={accountTypeIcon(account.type)} size={13} />
                         {t(`Accounts_type_${account.type}`)}
                       </span>
                     </div>
@@ -150,10 +148,7 @@ export default function Accounts() {
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                          <Icon
-                            name={account.type === 'bank' ? 'library' : 'money'}
-                            size={14}
-                          />
+                          <Icon name={accountTypeIcon(account.type)} size={14} />
                           {t(`Accounts_type_${account.type}`)}
                         </span>
                       </TableCell>
