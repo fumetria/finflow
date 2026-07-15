@@ -367,15 +367,15 @@ function AccountCard({
         </div>
 
         {short > 0 ? (
-          <div className="flex items-center gap-1.5 rounded-md bg-expense/10 px-2.5 py-1.5 text-xs font-medium text-expense">
-            <Icon name="important" size={14} />
+          <div className="flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1.5 text-xs font-medium text-foreground">
+            <Icon name="important" size={14} className="text-expense" />
             {t('Dashboard_shortfall', {
               amount: formatCurrency(account.shortfall, account.currency),
             })}
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 rounded-md bg-income/10 px-2.5 py-1.5 text-xs font-medium text-income">
-            <Icon name="check" size={14} />
+          <div className="flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1.5 text-xs font-medium text-foreground">
+            <Icon name="check" size={14} className="text-income" />
             {t('Dashboard_covered')}
           </div>
         )}
