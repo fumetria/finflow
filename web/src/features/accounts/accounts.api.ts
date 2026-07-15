@@ -1,6 +1,12 @@
 import { api } from '@/lib/api';
+import type { IconName } from '@/components/icon/icons.gen';
 
 export type AccountType = 'bank' | 'cash';
+
+// Icono duotono que representa cada tipo de cuenta (banco vs. efectivo).
+export function accountTypeIcon(type: AccountType): IconName {
+  return type === 'bank' ? 'library' : 'money';
+}
 
 export type Account = {
   id: string;

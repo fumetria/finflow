@@ -20,6 +20,12 @@ import {
   markExpensePaid,
   type Expense,
 } from '@/features/expenses/expenses.api';
+import {
+  accountTypeIcon,
+  fetchAccounts,
+  type Account,
+  type AccountType,
+} from '@/features/accounts/accounts.api';
 
 // Cuántos pagos pendientes más próximos mostrar en el dashboard.
 const UPCOMING_LIMIT = 5;
@@ -60,8 +66,9 @@ export default function Dashboard() {
     key: string;
     data: ForecastResponse | null;
     expenses: Expense[];
+    accounts: Account[];
     error: boolean;
-  }>({ key: '', data: null, expenses: [], error: false });
+  }>({ key: '', data: null, expenses: [], accounts: [], error: false });
 
   // Identifies the request the effect should serve; changes on a new date or a
   // retry. `loading` is derived from it so we never setState in the effect body.
@@ -69,12 +76,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchForecast(date), fetchExpenses()])
-      .then(([forecast, expenses]) => {
-        if (!cancelled) setResult({ key: requestKey, data: forecast, expenses, error: false });
+    Promise.all([fetchForecast(date), fetchExpenses(), fetchAccounts()])
+      .then(([forecast, expenses, accounts]) => {
+        if (!cancelled)
+          setResult({ key: requestKey, data: forecast, expenses, accounts, error: false });
       })
       .catch(() => {
-        if (!cancelled) setResult({ key: requestKey, data: null, expenses: [], error: true });
+        if (!cancelled)
+          setResult({ key: requestKey, data: null, expenses: [], accounts: [], error: true });
       });
     return () => {
       cancelled = true;
@@ -100,6 +109,12 @@ export default function Dashboard() {
   const accountsById = useMemo(
     () => new Map((data?.accounts ?? []).map((a) => [a.accountId, a])),
     [data],
+  );
+
+  // Tipo de cuenta por id: el forecast no lo trae, lo unimos con /accounts para el icono.
+  const accountTypeById = useMemo(
+    () => new Map(result.accounts.map((a) => [a.id, a.type])),
+    [result.accounts],
   );
 
   async function handlePay(id: string) {
@@ -210,7 +225,11 @@ export default function Dashboard() {
               <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 py-1 [scrollbar-width:none]">
                 {data.accounts.map((account) => (
                   <div key={account.accountId} className="shrink-0 basis-[85%] snap-center">
-                    <AccountCard account={account} formatCurrency={formatCurrency} />
+                    <AccountCard
+                      account={account}
+                      type={accountTypeById.get(account.accountId)}
+                      formatCurrency={formatCurrency}
+                    />
                   </div>
                 ))}
               </div>
@@ -221,6 +240,7 @@ export default function Dashboard() {
                 <AccountCard
                   key={account.accountId}
                   account={account}
+                  type={accountTypeById.get(account.accountId)}
                   formatCurrency={formatCurrency}
                 />
               ))}
@@ -267,9 +287,11 @@ export default function Dashboard() {
 
 function AccountCard({
   account,
+  type,
   formatCurrency,
 }: {
   account: AccountForecast;
+  type: AccountType | undefined;
   formatCurrency: (amount: string, currency: string) => string;
 }) {
   const { t } = useTranslation();
@@ -277,12 +299,28 @@ function AccountCard({
   const short = Number(account.shortfall);
   const negative = projected < 0;
 
+  // Cobertura: qué parte de lo pendiente cubre el saldo actual (0..1). Sin pendientes → 100%.
+  const pending = Number(account.pendingUntilDate);
+  const current = Number(account.currentBalance);
+  const coverage = pending <= 0 ? 1 : Math.min(Math.max(current / pending, 0), 1);
+  const covered = short <= 0;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          {type && (
+            <span
+              className={cn(
+                'grid size-7 shrink-0 place-items-center rounded-md',
+                type === 'bank' ? 'bg-brand/10 text-brand' : 'bg-muted text-muted-foreground',
+              )}
+            >
+              <Icon name={accountTypeIcon(type)} size={15} />
+            </span>
+          )}
           <span className="truncate">{account.name}</span>
-          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="ml-auto shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
             {account.currency}
           </span>
         </CardTitle>
@@ -313,6 +351,19 @@ function AccountCard({
           <span className="tabular-nums text-expense">
             −{formatCurrency(account.pendingUntilDate, account.currency)}
           </span>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>{t('Dashboard_coverage')}</span>
+            <span className="tabular-nums">{Math.round(coverage * 100)}%</span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className={cn('h-full rounded-full', covered ? 'bg-income' : 'bg-expense')}
+              style={{ width: `${coverage * 100}%` }}
+            />
+          </div>
         </div>
 
         {short > 0 ? (
@@ -351,20 +402,45 @@ function UpcomingRow({
   const { t, i18n } = useTranslation();
   const currency = account?.currency ?? 'EUR';
 
+  const due = new Date(expense.dueDate);
   const dueLabel = new Intl.DateTimeFormat(i18n.language, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-  }).format(new Date(expense.dueDate));
+  }).format(due);
+
+  // Días hasta el vencimiento respecto a hoy (a medianoche local). Solo resaltamos los
+  // vencimientos cercanos o vencidos; el resto muestra la fecha absoluta neutra.
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const dueMidnight = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+  const days = Math.round((dueMidnight.getTime() - startOfToday.getTime()) / 86_400_000);
+
+  let urgency: { label: string; className: string } = {
+    label: dueLabel,
+    className: 'text-muted-foreground',
+  };
+  if (days < 0) {
+    urgency = { label: t('Dashboard_due_overdue'), className: 'text-expense font-medium' };
+  } else if (days === 0) {
+    urgency = { label: t('Dashboard_due_today'), className: 'text-warning font-medium' };
+  } else if (days === 1) {
+    urgency = { label: t('Dashboard_due_tomorrow'), className: 'text-warning font-medium' };
+  } else if (days <= 3) {
+    urgency = { label: t('Dashboard_due_in_days', { count: days }), className: 'text-warning' };
+  }
 
   return (
     <Card>
       <CardContent className="flex items-center justify-between gap-3 p-4">
         <div className="min-w-0">
           <p className="truncate font-medium text-foreground">{expense.concept}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {account?.name ?? <span className="italic">{t('Expenses_account_unknown')}</span>}{' '}
-            · {dueLabel}
+          <p className="flex min-w-0 items-center gap-1 truncate text-xs">
+            <span className="truncate text-muted-foreground">
+              {account?.name ?? <span className="italic">{t('Expenses_account_unknown')}</span>}
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className={cn('shrink-0', urgency.className)}>{urgency.label}</span>
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-3">
