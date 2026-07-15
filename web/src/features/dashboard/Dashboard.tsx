@@ -247,37 +247,35 @@ export default function Dashboard() {
             </div>
 
             {/* Próximos pagos: pendientes más cercanos, pagables sin salir del dashboard */}
-            <div className="mt-6">
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="font-heading text-sm font-medium">
-                  {t('Dashboard_upcoming_title')}
-                </h2>
-                <Button asChild size="xs" variant="ghost">
+            <Card className="mt-6">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+                <CardTitle>{t('Dashboard_upcoming_title')}</CardTitle>
+                <Button asChild size="xs" variant="outline">
                   <Link to="/expenses">{t('Dashboard_upcoming_view_all')}</Link>
                 </Button>
-              </div>
-              {upcoming.length === 0 ? (
-                <Card>
-                  <CardContent className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+              </CardHeader>
+              <CardContent className="px-0">
+                {upcoming.length === 0 ? (
+                  <div className="flex items-center gap-2 border-t px-4 py-3 text-sm text-muted-foreground">
                     <Icon name="check" size={16} />
                     {t('Dashboard_upcoming_empty')}
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="flex flex-col gap-2.5">
-                  {upcoming.map((expense) => (
-                    <UpcomingRow
-                      key={expense.id}
-                      expense={expense}
-                      account={accountsById.get(expense.accountId)}
-                      paying={paying === expense.id}
-                      onPay={() => handlePay(expense.id)}
-                      formatCurrency={formatCurrency}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+                  </div>
+                ) : (
+                  <div className="divide-y border-t">
+                    {upcoming.map((expense) => (
+                      <UpcomingRow
+                        key={expense.id}
+                        expense={expense}
+                        account={accountsById.get(expense.accountId)}
+                        paying={paying === expense.id}
+                        onPay={() => handlePay(expense.id)}
+                        formatCurrency={formatCurrency}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </>
         )}
       </div>
@@ -431,28 +429,26 @@ function UpcomingRow({
   }
 
   return (
-    <Card>
-      <CardContent className="flex items-center justify-between gap-3 p-4">
-        <div className="min-w-0">
-          <p className="truncate font-medium text-foreground">{expense.concept}</p>
-          <p className="flex min-w-0 items-center gap-1 truncate text-xs">
-            <span className="truncate text-muted-foreground">
-              {account?.name ?? <span className="italic">{t('Expenses_account_unknown')}</span>}
-            </span>
-            <span className="text-muted-foreground">·</span>
-            <span className={cn('shrink-0', urgency.className)}>{urgency.label}</span>
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="tabular-nums font-medium text-expense">
-            −{formatCurrency(expense.amount, currency)}
+    <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+      <div className="min-w-0">
+        <p className="truncate font-medium text-foreground">{expense.concept}</p>
+        <p className="flex min-w-0 items-center gap-1 truncate text-xs">
+          <span className="truncate text-muted-foreground">
+            {account?.name ?? <span className="italic">{t('Expenses_account_unknown')}</span>}
           </span>
-          <Button size="sm" variant="outline" disabled={paying} onClick={onPay}>
-            {t('Expenses_mark_paid')}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          <span className="text-muted-foreground">·</span>
+          <span className={cn('shrink-0', urgency.className)}>{urgency.label}</span>
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="tabular-nums font-medium text-expense">
+          −{formatCurrency(expense.amount, currency)}
+        </span>
+        <Button size="sm" variant="outline" disabled={paying} onClick={onPay}>
+          {t('Expenses_mark_paid')}
+        </Button>
+      </div>
+    </div>
   );
 }
 
