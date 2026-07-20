@@ -218,7 +218,48 @@ pnpm --filter @finflow/api db:studio     # abre Drizzle Studio
 En el despliegue Docker las migraciones las aplica el servicio `migrate` mediante
 `api/src/migrate.ts`, que solo necesita `DATABASE_URL`.
 
-No hay script de datos de ejemplo: los datos se crean desde la propia interfaz.
+## Datos de demostración (seed)
+
+`api/src/db/seed.ts` puebla la base de datos con un usuario de demostración completo:
+cuentas, categorías, entidades, historial de gastos pagados, gastos pendientes, reglas
+recurrentes y préstamos con sus cuotas materializadas. Reutiliza los propios servicios de la
+API (reglas recurrentes, préstamos, marcar como pagado) para que el resultado sea idéntico al
+de una app usada durante meses. El seed es idempotente: borra el usuario demo previo (en
+cascada) y lo recrea desde cero.
+
+```bash
+pnpm --filter @finflow/api db:seed
+```
+
+Credenciales del usuario creado: **`demo@finflow.app` / `Demo1234!`**.
+
+Uno de los gastos pendientes vence deliberadamente en ~2 días, dentro de la ventana
+`DUE_SOON_DAYS` (por defecto 3), para poder probar de extremo a extremo el flujo de
+notificaciones de vencimiento próximo.
+
+### Forzar el flujo de eventos y ver los emails en Mailhog
+
+El worker escanea a diario por cron (`DUE_SOON_CRON`), pero para verlo al momento se puede
+disparar un escaneo puntual. El escaneo busca gastos `pending` que vencen dentro de
+`DUE_SOON_DAYS` y **aún no notificados**, publica un evento Kafka por cada uno, y el consumer
+(ya en marcha) envía el email correspondiente a Mailhog.
+
+```bash
+# Con todo el stack en Docker: lanzar el escaneo dentro del contenedor worker
+docker compose exec worker pnpm scan
+
+# En desarrollo local por workspace
+pnpm --filter @finflow/worker scan
+
+# Alternativa: arrancar el worker haciendo un escaneo nada más iniciar
+RUN_SCAN_ON_BOOT=true docker compose up worker
+```
+
+Después, abre **http://localhost:8025** (Mailhog) para ver los correos "Pago próximo: …".
+
+> Cada gasto notificado se marca con `due_soon_notified_at`, así que un segundo escaneo **no
+> reenvía** el mismo email. Para repetir la prueba, vuelve a ejecutar el seed (que recrea el
+> usuario demo desde cero) y lanza de nuevo el escaneo.
 
 ## Sistema de iconos
 
@@ -288,5 +329,6 @@ Además, todo el stack está dockerizado y verificado de extremo a extremo con
 
 ## Notas
 
-Proyecto de portfolio. Todavía no incluye una suite de tests automatizados. Los datos de
-demostración se generan a través de la interfaz, no hay script de seed.
+Proyecto de portfolio. Todavía no incluye una suite de tests automatizados. Para poblar la
+app con datos de ejemplo existe un script de seed (`pnpm --filter @finflow/api db:seed`); ver
+la sección "Datos de demostración (seed)".
