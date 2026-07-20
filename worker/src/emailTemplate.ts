@@ -1,14 +1,24 @@
+import { fileURLToPath } from 'node:url';
 import type { DueSoonEvent } from './kafka.js';
 
 // Brand tokens copied from the frontend (web/src/index.css). The worker doesn't
 // share the web CSS, so the hex values live here as constants.
 const BRAND = '#0d9488'; // teal, --brand
-const BRAND_DARK = '#0f766e'; // slightly darker teal for the glyph border
 const INK = '#18181b'; // near-black text, --foreground
 const MUTED = '#71717a'; // --muted-foreground
 const BORDER = '#e4e4e7'; // --border
 const PAGE_BG = '#f4f4f5'; // neutral page background
 const CARD_BG = '#ffffff';
+
+// The finflow logo ships as a rasterized PNG embedded via CID (email clients
+// don't render SVG reliably). Source: worker/assets/logo.svg. The path resolves
+// relative to this module, so it works both under tsx and in the container.
+const LOGO_CID = 'finflow-logo';
+export const LOGO_ATTACHMENT = {
+  filename: 'finflow-logo.png',
+  path: fileURLToPath(new URL('../assets/logo@2x.png', import.meta.url)),
+  cid: LOGO_CID,
+} as const;
 
 /** Escapes user-provided values before interpolating them into the HTML. */
 function escapeHtml(value: string): string {
@@ -25,9 +35,12 @@ export function buildDueSoonEmail(event: DueSoonEvent): {
   subject: string;
   text: string;
   html: string;
+  attachments: [typeof LOGO_ATTACHMENT];
 } {
   const due = new Date(event.dueDate).toLocaleDateString('es-ES');
-  const money = `${event.amount} ${event.currency}`;
+  // Amount arrives as a plain decimal string (e.g. "32.90"); use the comma
+  // decimal separator expected in es-ES.
+  const money = `${event.amount.replace('.', ',')} ${event.currency}`;
 
   const subject = `Pago próximo: ${event.concept} (${money})`;
 
@@ -65,11 +78,7 @@ export function buildDueSoonEmail(event: DueSoonEvent): {
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="vertical-align:middle;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" style="width:30px;height:30px;background-color:#ffffff;border-radius:8px;">
-                      <tr>
-                        <td align="center" style="font-size:17px;line-height:30px;font-weight:800;color:${BRAND_DARK};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">&#8599;</td>
-                      </tr>
-                    </table>
+                    <img src="cid:${LOGO_CID}" width="30" height="30" alt="finflow" style="display:block;border:0;width:30px;height:30px;" />
                   </td>
                   <td style="vertical-align:middle;padding-left:12px;font-size:19px;font-weight:700;letter-spacing:-0.02em;color:#ffffff;">finflow</td>
                 </tr>
@@ -101,5 +110,5 @@ export function buildDueSoonEmail(event: DueSoonEvent): {
 </body>
 </html>`;
 
-  return { subject, text, html };
+  return { subject, text, html, attachments: [LOGO_ATTACHMENT] };
 }

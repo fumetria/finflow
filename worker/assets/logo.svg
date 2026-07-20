@@ -1,0 +1,12 @@
+<!-- finflow brand mark for email: white rounded square with a teal ascending
+     chart glyph. Reconstructed from web/src/components/BrandMark.tsx so it reads
+     on the teal email header. Source of truth for worker/assets/logo@2x.png,
+     which is what actually ships (embedded via CID). Regenerate the PNG with the
+     resvg-js CLI in fit-width 60 mode targeting logo@2x.png. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none">
+  <rect width="30" height="30" rx="8" fill="#ffffff"/>
+  <g transform="translate(3 3)" stroke="#0d9488" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 17 10 11l3.5 3.5L20 7"/>
+    <path d="M15 7h5v5"/>
+  </g>
+</svg>

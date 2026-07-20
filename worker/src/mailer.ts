@@ -27,12 +27,13 @@ console.log(
 );
 
 export async function sendDueSoonEmail(event: DueSoonEvent) {
-  const { subject, text, html } = buildDueSoonEmail(event);
+  const { subject, text, html, attachments } = buildDueSoonEmail(event);
   await transport.sendMail({
     from: env.MAIL_FROM,
     to: event.userEmail,
     subject,
     text,
     html,
+    attachments,
   });
 }
