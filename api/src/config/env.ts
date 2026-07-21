@@ -14,6 +14,12 @@ const schema = z.object({
   JWT_SECRET: z.string().min(16),
   JWT_EXPIRES_IN: z.string().default('1d'),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
+
+  // Credentials used by the demo seeder (db:seed). Only read there.
+  SEED_DEMO_EMAIL: z.string().email().default('demo@finflow.app'),
+  SEED_DEMO_PASSWORD: z.string().min(8).default('Demo1234!'),
+  SEED_ADMIN_EMAIL: z.string().email().default('admin@finflow.app'),
+  SEED_ADMIN_PASSWORD: z.string().min(8).default('Admin1234!'),
 });
 
 export const env = schema.parse(process.env);

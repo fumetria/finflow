@@ -231,7 +231,15 @@ cascada) y lo recrea desde cero.
 pnpm --filter @finflow/api db:seed
 ```
 
-Credenciales del usuario creado: **`demo@finflow.app` / `Demo1234!`**.
+El seeder crea dos usuarios y coge sus credenciales del `.env`:
+
+| Variables                                 | Por defecto                     | Datos                        |
+| ----------------------------------------- | ------------------------------- | ---------------------------- |
+| `SEED_DEMO_EMAIL` / `SEED_DEMO_PASSWORD`  | `demo@finflow.app` / `Demo1234!`  | dataset completo de la demo  |
+| `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`| `admin@finflow.app` / `Admin1234!`| ninguno (solo login)         |
+
+El usuario "admin" es de momento un usuario normal: no tiene rol `admin` ni
+funcionalidad propia, solo email y contraseña.
 
 Uno de los gastos pendientes vence deliberadamente en ~2 días, dentro de la ventana
 `DUE_SOON_DAYS` (por defecto 3), para poder probar de extremo a extremo el flujo de
