@@ -10,12 +10,16 @@
 // scan (DUE_SOON_DAYS, default 3) picks it up and a test email lands in Mailhog
 // (http://localhost:8025).
 //
+// It also creates a second plain user (the "admin" login), with no data of its
+// own. Credentials for both come from the root .env (SEED_DEMO_* / SEED_ADMIN_*).
+//
 // Run with: pnpm --filter @finflow/api db:seed
 // Env vars are loaded transitively: db/index.js -> config/env.js runs
 // dotenv on the root .env at import time, so no --env-file is needed here.
 
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
+import { env } from '../config/env.js';
 import { db, users, accounts, entities, expensesCategories, expenses } from './index.js';
 import {
   createRecurringRule,
@@ -24,8 +28,26 @@ import {
 import { createLoan, materializeLoanInstallments } from '../routes/loans/loans.service.js';
 import { markAsPaid } from '../routes/expenses/expenses.service.js';
 
-const DEMO_EMAIL = 'demo@finflow.app';
-const DEMO_PASSWORD = 'Demo1234!';
+const DEMO_EMAIL = env.SEED_DEMO_EMAIL;
+const DEMO_PASSWORD = env.SEED_DEMO_PASSWORD;
+const ADMIN_EMAIL = env.SEED_ADMIN_EMAIL;
+const ADMIN_PASSWORD = env.SEED_ADMIN_PASSWORD;
+
+// Recreates a user from scratch: deleting cascades to every row it owns, so the
+// seed is idempotent no matter how many times it runs.
+async function recreateUser(email: string, password: string) {
+  const [existing] = await db.select().from(users).where(eq(users.email, email));
+  if (existing) {
+    console.log(`Removing previous user ${email} (cascades to all owned data)...`);
+    await db.delete(users).where(eq(users.id, existing.id));
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const [created] = await db.insert(users).values({ email, passwordHash }).returning();
+  if (!created) throw new Error(`Failed to create user ${email}`);
+  console.log(`Created user ${email} / ${password}`);
+  return created;
+}
 
 function daysAgo(n: number) {
   const d = new Date();
@@ -40,20 +62,12 @@ function monthsAgo(n: number, day = 1) {
 }
 
 async function main() {
-  const [existing] = await db.select().from(users).where(eq(users.email, DEMO_EMAIL));
-  if (existing) {
-    console.log('Removing previous demo user (cascades to all owned data)...');
-    await db.delete(users).where(eq(users.id, existing.id));
-  }
-
-  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
-  const [demoUser] = await db
-    .insert(users)
-    .values({ email: DEMO_EMAIL, passwordHash })
-    .returning();
-  if (!demoUser) throw new Error('Failed to create demo user');
+  const demoUser = await recreateUser(DEMO_EMAIL, DEMO_PASSWORD);
   const userId = demoUser.id;
-  console.log(`Created demo user ${DEMO_EMAIL} / ${DEMO_PASSWORD}`);
+
+  // Extra login for the demo. No admin role and no data of its own yet — it is
+  // just a second set of credentials.
+  await recreateUser(ADMIN_EMAIL, ADMIN_PASSWORD);
 
   // ── Accounts ─────────────────────────────────────────────────────────────
   const [checking, savings, cash] = await db
