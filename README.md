@@ -210,6 +210,26 @@ En desarrollo los correos los captura Mailhog: abre http://localhost:8025 y puls
 desde ahí. Los usuarios del seeder y los que ya existían antes de esta funcionalidad se crean
 o migran como verificados, así que no necesitan pasar por el flujo.
 
+## Plantillas de email
+
+Todas las plantillas viven en una única carpeta, `api/src/emails/`, y se consumen desde la api
+y desde el worker vía el subpath `@finflow/api/emails`:
+
+| Fichero | Qué es |
+| --- | --- |
+| `layout.ts` | Shell HTML compartido: tokens de marca, cabecera teal con logo, footer, `escapeHtml`, `detailRow`, `button`. |
+| `verification.ts` | Confirmación de cuenta. |
+| `dueSoon.ts` | Aviso de pago próximo a vencer. |
+| `index.ts` | Punto de entrada del subpath; re-exporta cada plantilla. |
+| `assets/` | Logo (`logo.svg` como fuente, `logo@2x.png` es el que se adjunta por CID). |
+
+Cada plantilla exporta un `build*Email(...)` que devuelve `{ subject, text, html, attachments }`,
+listo para hacer spread en `sendMail`. Los mailers (`api/src/lib/mailer.ts`,
+`worker/src/mailer.ts`) solo se ocupan del transporte SMTP, no del contenido.
+
+Para añadir una plantilla nueva: crear el fichero en esa carpeta apoyándose en `renderLayout`
+y re-exportarlo desde `index.ts`.
+
 ## Variables de entorno
 
 Se cargan desde un único `.env` en la raíz (copia de `.env.example`, ignorado por git). En los
