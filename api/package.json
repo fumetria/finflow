@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./schema": "./src/db/schema.ts"
+    "./schema": "./src/db/schema.ts",
+    "./emails": "./src/emails/index.ts"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",

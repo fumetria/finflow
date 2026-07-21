@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { env } from './config/env.js';
 import type { DueSoonEvent } from './kafka.js';
-import { buildDueSoonEmail } from './emailTemplate.js';
+import { buildDueSoonEmail } from '@finflow/api/emails';
 
 // With credentials we authenticate against a real provider (e.g. IONOS);
 // without them we fall back to Mailhog's plain, unauthenticated SMTP.
@@ -27,13 +27,9 @@ console.log(
 );
 
 export async function sendDueSoonEmail(event: DueSoonEvent) {
-  const { subject, text, html, attachments } = buildDueSoonEmail(event);
   await transport.sendMail({
     from: env.MAIL_FROM,
     to: event.userEmail,
-    subject,
-    text,
-    html,
-    attachments,
+    ...buildDueSoonEmail(event),
   });
 }

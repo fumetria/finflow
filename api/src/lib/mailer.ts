@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env.js';
+import { buildVerificationEmail } from '../emails/index.js';
 
 // With credentials we authenticate against a real provider (e.g. IONOS);
 // without them we fall back to Mailhog's plain, unauthenticated SMTP.
@@ -25,15 +26,9 @@ console.log(
 );
 
 export async function sendVerificationEmail(to: string, verifyUrl: string) {
-  const hours = env.EMAIL_VERIFICATION_TTL_HOURS;
   await transport.sendMail({
     from: env.MAIL_FROM,
     to,
-    subject: 'Confirma tu cuenta de finflow',
-    text:
-      `Bienvenido a finflow.\n\n` +
-      `Confirma tu dirección de correo abriendo este enlace:\n${verifyUrl}\n\n` +
-      `El enlace caduca en ${hours} horas y solo puede usarse una vez.\n` +
-      `Si no has creado ninguna cuenta, ignora este mensaje.`,
+    ...buildVerificationEmail(verifyUrl, env.EMAIL_VERIFICATION_TTL_HOURS),
   });
 }
