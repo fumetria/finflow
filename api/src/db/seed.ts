@@ -43,7 +43,12 @@ async function recreateUser(email: string, password: string) {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const [created] = await db.insert(users).values({ email, passwordHash }).returning();
+  // Seeded users skip the email verification flow — they must be able to log in
+  // right away.
+  const [created] = await db
+    .insert(users)
+    .values({ email, passwordHash, emailVerifiedAt: new Date() })
+    .returning();
   if (!created) throw new Error(`Failed to create user ${email}`);
   console.log(`Created user ${email} / ${password}`);
   return created;

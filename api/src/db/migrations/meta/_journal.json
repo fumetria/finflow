@@ -43,6 +43,13 @@
       "when": 1782510349895,
       "tag": "0005_short_the_fallen",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784671650463,
+      "tag": "0006_deep_medusa",
+      "breakpoints": true
     }
   ]
 }

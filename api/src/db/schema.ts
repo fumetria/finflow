@@ -33,6 +33,22 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   role: roleEnum('role').notNull().default('user'),
+  // Null until the user clicks the link sent on registration. Login is refused
+  // while it stays null.
+  emailVerifiedAt: timestamp('email_verified_at'),
+  ...timestamps,
+});
+
+// One row per verification link sent. The token itself never touches the DB —
+// only its sha256 hex digest — so a dump of this table cannot be replayed.
+export const emailVerificationTokens = pgTable('email_verification_tokens', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: varchar('token_hash', { length: 64 }).notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(),
+  usedAt: timestamp('used_at'),
   ...timestamps,
 });
 
