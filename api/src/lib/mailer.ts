@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
-import { env } from './config/env.js';
-import type { DueSoonEvent } from './kafka.js';
-import { buildDueSoonEmail } from '@finflow/api/emails';
+import { env } from '../config/env.js';
+import { buildVerificationEmail } from '../emails/index.js';
 
 // With credentials we authenticate against a real provider (e.g. IONOS);
 // without them we fall back to Mailhog's plain, unauthenticated SMTP.
@@ -26,10 +25,10 @@ console.log(
     `(${useAuth ? 'authenticated' : 'no-auth'}, ${secure ? 'TLS' : 'STARTTLS/plain'})`,
 );
 
-export async function sendDueSoonEmail(event: DueSoonEvent) {
+export async function sendVerificationEmail(to: string, verifyUrl: string) {
   await transport.sendMail({
     from: env.MAIL_FROM,
-    to: event.userEmail,
-    ...buildDueSoonEmail(event),
+    to,
+    ...buildVerificationEmail(verifyUrl, env.EMAIL_VERIFICATION_TTL_HOURS),
   });
 }

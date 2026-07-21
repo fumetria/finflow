@@ -108,6 +108,11 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+      # Verification emails on registration. Same Mailhog the worker uses.
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      MAIL_FROM: ${MAIL_FROM:-finflow@example.com}
+      EMAIL_VERIFICATION_TTL_HOURS: ${EMAIL_VERIFICATION_TTL_HOURS:-24}
     ports:
       - "4000:4000"
     depends_on:
