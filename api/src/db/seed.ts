@@ -78,7 +78,13 @@ async function main() {
   const [checking, savings, cash] = await db
     .insert(accounts)
     .values([
-      { userId, name: 'Cuenta Corriente', type: 'bank', currentBalance: '6500.00', currency: 'EUR' },
+      {
+        userId,
+        name: 'Cuenta Corriente',
+        type: 'bank',
+        currentBalance: '6500.00',
+        currency: 'EUR',
+      },
       { userId, name: 'Cuenta Ahorro', type: 'bank', currentBalance: '10000.00', currency: 'EUR' },
       { userId, name: 'Efectivo', type: 'cash', currentBalance: '120.00', currency: 'EUR' },
     ])
@@ -126,15 +132,75 @@ async function main() {
     amount: number;
     dueDate: Date;
   }> = [
-    { accountId: checking.id, entityId: mercadona.id, categoryId: catGroceries.id, concept: 'Compra semanal', amount: 82.4, dueDate: daysAgo(56) },
-    { accountId: checking.id, entityId: mercadona.id, categoryId: catGroceries.id, concept: 'Compra semanal', amount: 76.1, dueDate: daysAgo(42) },
-    { accountId: checking.id, entityId: mercadona.id, categoryId: catGroceries.id, concept: 'Compra semanal', amount: 91.3, dueDate: daysAgo(35) },
-    { accountId: checking.id, categoryId: catTransport.id, concept: 'Gasolina Repsol', amount: 55.0, dueDate: daysAgo(28) },
-    { accountId: checking.id, entityId: mercadona.id, categoryId: catGroceries.id, concept: 'Compra semanal', amount: 88.75, dueDate: daysAgo(21) },
-    { accountId: cash.id, categoryId: catLeisure.id, concept: 'Cine y cena', amount: 45.0, dueDate: daysAgo(20) },
-    { accountId: checking.id, categoryId: catTransport.id, concept: 'Gasolina Repsol', amount: 58.2, dueDate: daysAgo(14) },
-    { accountId: checking.id, entityId: mercadona.id, categoryId: catGroceries.id, concept: 'Compra semanal', amount: 79.9, dueDate: daysAgo(7) },
-    { accountId: checking.id, entityId: iberdrola.id, categoryId: catUtilities.id, concept: 'Factura luz junio', amount: 64.3, dueDate: daysAgo(2) },
+    {
+      accountId: checking.id,
+      entityId: mercadona.id,
+      categoryId: catGroceries.id,
+      concept: 'Compra semanal',
+      amount: 82.4,
+      dueDate: daysAgo(56),
+    },
+    {
+      accountId: checking.id,
+      entityId: mercadona.id,
+      categoryId: catGroceries.id,
+      concept: 'Compra semanal',
+      amount: 76.1,
+      dueDate: daysAgo(42),
+    },
+    {
+      accountId: checking.id,
+      entityId: mercadona.id,
+      categoryId: catGroceries.id,
+      concept: 'Compra semanal',
+      amount: 91.3,
+      dueDate: daysAgo(35),
+    },
+    {
+      accountId: checking.id,
+      categoryId: catTransport.id,
+      concept: 'Gasolina Repsol',
+      amount: 55.0,
+      dueDate: daysAgo(28),
+    },
+    {
+      accountId: checking.id,
+      entityId: mercadona.id,
+      categoryId: catGroceries.id,
+      concept: 'Compra semanal',
+      amount: 88.75,
+      dueDate: daysAgo(21),
+    },
+    {
+      accountId: cash.id,
+      categoryId: catLeisure.id,
+      concept: 'Cine y cena',
+      amount: 45.0,
+      dueDate: daysAgo(20),
+    },
+    {
+      accountId: checking.id,
+      categoryId: catTransport.id,
+      concept: 'Gasolina Repsol',
+      amount: 58.2,
+      dueDate: daysAgo(14),
+    },
+    {
+      accountId: checking.id,
+      entityId: mercadona.id,
+      categoryId: catGroceries.id,
+      concept: 'Compra semanal',
+      amount: 79.9,
+      dueDate: daysAgo(7),
+    },
+    {
+      accountId: checking.id,
+      entityId: iberdrola.id,
+      categoryId: catUtilities.id,
+      concept: 'Factura luz junio',
+      amount: 64.3,
+      dueDate: daysAgo(2),
+    },
   ];
 
   for (const item of paidHistory) {
@@ -159,11 +225,44 @@ async function main() {
   // The first one is due in ~2 days: it falls inside the worker's due-soon
   // window (DUE_SOON_DAYS=3) so a scan reliably fires a test email to Mailhog.
   const pendingUpcoming = [
-    { accountId: checking.id, entityId: vodafone.id, categoryId: catUtilities.id, concept: 'Factura móvil', amount: 32.9, dueDate: daysAgo(-2) },
-    { accountId: checking.id, entityId: vodafone.id, categoryId: catUtilities.id, concept: 'Factura móvil', amount: 32.9, dueDate: daysAgo(-8) },
-    { accountId: checking.id, categoryId: catTransport.id, concept: 'Revisión coche', amount: 120.0, dueDate: daysAgo(-15) },
-    { accountId: checking.id, entityId: iberdrola.id, categoryId: catUtilities.id, concept: 'Factura luz julio', amount: 58.1, dueDate: daysAgo(-26) },
-    { accountId: checking.id, categoryId: catHousing.id, concept: 'Seguro hogar', amount: 210.0, dueDate: daysAgo(-31) },
+    {
+      accountId: checking.id,
+      entityId: vodafone.id,
+      categoryId: catUtilities.id,
+      concept: 'Factura móvil',
+      amount: 32.9,
+      dueDate: daysAgo(-2),
+    },
+    {
+      accountId: checking.id,
+      entityId: vodafone.id,
+      categoryId: catUtilities.id,
+      concept: 'Factura móvil',
+      amount: 32.9,
+      dueDate: daysAgo(-8),
+    },
+    {
+      accountId: checking.id,
+      categoryId: catTransport.id,
+      concept: 'Revisión coche',
+      amount: 120.0,
+      dueDate: daysAgo(-15),
+    },
+    {
+      accountId: checking.id,
+      entityId: iberdrola.id,
+      categoryId: catUtilities.id,
+      concept: 'Factura luz julio',
+      amount: 58.1,
+      dueDate: daysAgo(-26),
+    },
+    {
+      accountId: checking.id,
+      categoryId: catHousing.id,
+      concept: 'Seguro hogar',
+      amount: 210.0,
+      dueDate: daysAgo(-31),
+    },
   ];
 
   for (const item of pendingUpcoming) {

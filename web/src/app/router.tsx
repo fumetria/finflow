@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 import AppLayout from '@/components/layout/AppLayout';
 import LoginPage from '@/features/auth/LoginPage';
+import VerifyEmailPage from '@/features/auth/VerifyEmailPage';
 import DashboardPage from '@/features/dashboard/Dashboard';
 import AccountsPage from '@/features/accounts/Accounts';
 import ExpensesPage from '@/features/expenses/Expenses';
@@ -14,6 +15,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/verify-email',
+    element: <VerifyEmailPage />,
   },
   {
     path: '/',

@@ -131,10 +131,7 @@ export async function resendVerification(body: ResendVerificationBody) {
       and(
         eq(emailVerificationTokens.userId, user.id),
         isNull(emailVerificationTokens.usedAt),
-        gt(
-          emailVerificationTokens.createdAt,
-          new Date(Date.now() - RESEND_COOLDOWN_MS),
-        ),
+        gt(emailVerificationTokens.createdAt, new Date(Date.now() - RESEND_COOLDOWN_MS)),
       ),
     );
   if (recent) return genericResponse;
@@ -144,10 +141,7 @@ export async function resendVerification(body: ResendVerificationBody) {
     .update(emailVerificationTokens)
     .set({ usedAt: new Date() })
     .where(
-      and(
-        eq(emailVerificationTokens.userId, user.id),
-        isNull(emailVerificationTokens.usedAt),
-      ),
+      and(eq(emailVerificationTokens.userId, user.id), isNull(emailVerificationTokens.usedAt)),
     );
 
   await issueVerificationToken(user.id, user.email);

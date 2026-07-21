@@ -8,7 +8,7 @@ import { Icon } from '@/components/icon/Icon';
 import { loginSchema } from './LoginSchema';
 import type { LoginFormFormData } from './LoginSchema';
 import { useAuth } from './AuthContext';
-import type { AuthUser } from './AuthContext';
+import { userFromToken } from './token';
 import { api } from '@/lib/api';
 import { Label } from '@/components/ui/label';
 import { InputWithIcon } from '@/components/ui/input';
@@ -17,23 +17,19 @@ import { Separator } from '@/components/ui/separator';
 import { BrandMark } from '@/components/BrandMark';
 import { GoogleGlyph } from './GoogleGlyph';
 
-// The API returns only { token }; the JWT payload carries the user claims
-// (sub/email/role), so we derive the AuthUser from it.
-function userFromToken(token: string): AuthUser {
-  const payload = JSON.parse(atob(token.split('.')[1] ?? '')) as {
-    sub: string;
-    email: string;
-    role: 'admin' | 'user';
-  };
-  return { id: payload.sub, email: payload.email, role: payload.role };
-}
-
 export default function LoginPage() {
   const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [rootError, setRootError] = useState<string | null>(null);
+  // Set after a successful registration: the form is swapped for a
+  // "check your inbox" panel until the user verifies the address.
+  const [awaitingEmail, setAwaitingEmail] = useState<string | null>(null);
+  // Set when login is refused because the account is still unverified, so we
+  // can offer a resend without making the user register again.
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [resendNotice, setResendNotice] = useState<string | null>(null);
   const isLogin = mode === 'login';
 
   const {
@@ -46,12 +42,26 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormFormData) => {
     setRootError(null);
+    setUnverifiedEmail(null);
+    setResendNotice(null);
     try {
-      const res = await api.post(isLogin ? '/auth/login' : '/auth/register', data);
+      if (!isLogin) {
+        // Registration no longer returns a JWT — the account is unusable until
+        // the emailed link is opened.
+        await api.post('/auth/register', data);
+        setAwaitingEmail(data.email);
+        return;
+      }
+      const res = await api.post('/auth/login', data);
       const token: string = res.data.token;
       login(token, userFromToken(token));
       navigate('/dashboard');
     } catch (err) {
+      if (isAxiosError(err) && err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+        setUnverifiedEmail(data.email);
+        setRootError(t('Auth_email_not_verified'));
+        return;
+      }
       const message =
         isAxiosError(err) && err.response?.data?.message
           ? (err.response.data.message as string)
@@ -60,9 +70,29 @@ export default function LoginPage() {
     }
   };
 
+  const resendVerification = async (email: string) => {
+    setResendNotice(null);
+    try {
+      await api.post('/auth/resend-verification', { email });
+    } catch {
+      // The endpoint answers 200 generically; a network failure is the only
+      // realistic error and the same notice keeps the UI simple.
+    }
+    setResendNotice(t('Auth_verification_resent'));
+  };
+
   const toggleMode = () => {
     setMode(isLogin ? 'register' : 'login');
     setRootError(null);
+    setUnverifiedEmail(null);
+    setResendNotice(null);
+  };
+
+  const backToLogin = () => {
+    setAwaitingEmail(null);
+    setMode('login');
+    setRootError(null);
+    setResendNotice(null);
   };
 
   return (
@@ -76,85 +106,143 @@ export default function LoginPage() {
 
         <div className="flex flex-1 items-center">
           <div className="mx-auto w-full max-w-95">
-            <div className="mb-7">
-              <h1 className="text-[26px] font-semibold tracking-tight">
-                {t(isLogin ? 'Login_welcome' : 'Register_welcome')}
-              </h1>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                {t(isLogin ? 'Login_subtitle' : 'Register_subtitle')}
-              </p>
-            </div>
-
-            <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="email">{t('Email')}</Label>
-                <InputWithIcon
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder={t('Email_placeholder')}
-                  aria-invalid={!!errors.email}
-                  icon={<Icon name="mail" size={18} />}
-                  {...register('email')}
-                />
-                {errors.email && <p className="text-[12px] text-expense">{t(errors.email.message!)}</p>}
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">{t('Password')}</Label>
-                  {isLogin && (
-                    <button
-                      type="button"
-                      className="text-[12px] text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {t('Forgot your password?')}
-                    </button>
-                  )}
+            {awaitingEmail ? (
+              <>
+                <div className="mb-7">
+                  <h1 className="text-[26px] font-semibold tracking-tight">
+                    {t('Verify_check_inbox')}
+                  </h1>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    {t('Verify_sent_to', { email: awaitingEmail })}
+                  </p>
                 </div>
-                <InputWithIcon
-                  id="password"
-                  type="password"
-                  autoComplete={isLogin ? 'current-password' : 'new-password'}
-                  placeholder="••••••••"
-                  aria-invalid={!!errors.password}
-                  icon={<Icon name="lock" size={18} />}
-                  {...register('password')}
-                />
-                {errors.password && (
-                  <p className="text-[12px] text-expense">{t(errors.password.message!)}</p>
-                )}
-              </div>
 
-              {rootError && <p className="text-[13px] text-expense">{rootError}</p>}
+                <div className="rounded-xl border border-border bg-card/60 p-5">
+                  <p className="text-[13px] text-muted-foreground">{t('Verify_instructions')}</p>
+                  {resendNotice && <p className="mt-3 text-[13px] text-income">{resendNotice}</p>}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="mt-4 w-full border-stone-300"
+                    onClick={() => void resendVerification(awaitingEmail)}
+                  >
+                    {t('Verify_resend')}
+                  </Button>
+                </div>
 
-              <Button type="submit" size="lg" className="mt-1 w-full" disabled={isSubmitting}>
-                {t(isLogin ? 'Login' : 'Register_submit')}
-              </Button>
+                <p className="mt-7 text-center text-sm text-muted-foreground">
+                  <button
+                    type="button"
+                    onClick={backToLogin}
+                    className="font-medium text-foreground underline-offset-4 hover:underline"
+                  >
+                    {t('Verify_back_to_login')}
+                  </button>
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="mb-7">
+                  <h1 className="text-[26px] font-semibold tracking-tight">
+                    {t(isLogin ? 'Login_welcome' : 'Register_welcome')}
+                  </h1>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    {t(isLogin ? 'Login_subtitle' : 'Register_subtitle')}
+                  </p>
+                </div>
 
-              <div className="flex items-center gap-3 py-1">
-                <Separator className="flex-1 bg-stone-300" />
-                <span className="text-[11px] tracking-wide text-muted-foreground uppercase">
-                  {t('or')}
-                </span>
-                <Separator className="flex-1 bg-stone-300" />
-              </div>
+                <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="email">{t('Email')}</Label>
+                    <InputWithIcon
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder={t('Email_placeholder')}
+                      aria-invalid={!!errors.email}
+                      icon={<Icon name="mail" size={18} />}
+                      {...register('email')}
+                    />
+                    {errors.email && (
+                      <p className="text-[12px] text-expense">{t(errors.email.message!)}</p>
+                    )}
+                  </div>
 
-              <Button type="button" variant="outline" size="lg" className="w-full border-stone-300">
-                <GoogleGlyph /> {t('Continue with Google')}
-              </Button>
-            </form>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password">{t('Password')}</Label>
+                      {isLogin && (
+                        <button
+                          type="button"
+                          className="text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          {t('Forgot your password?')}
+                        </button>
+                      )}
+                    </div>
+                    <InputWithIcon
+                      id="password"
+                      type="password"
+                      autoComplete={isLogin ? 'current-password' : 'new-password'}
+                      placeholder="••••••••"
+                      aria-invalid={!!errors.password}
+                      icon={<Icon name="lock" size={18} />}
+                      {...register('password')}
+                    />
+                    {errors.password && (
+                      <p className="text-[12px] text-expense">{t(errors.password.message!)}</p>
+                    )}
+                  </div>
 
-            <p className="mt-7 text-center text-sm text-muted-foreground">
-              {t(isLogin ? "Don't have an account?" : 'Already have an account?')}{' '}
-              <button
-                type="button"
-                onClick={toggleMode}
-                className="font-medium text-foreground underline-offset-4 hover:underline"
-              >
-                {t(isLogin ? 'Sign up' : 'Sign in')}
-              </button>
-            </p>
+                  {rootError && <p className="text-[13px] text-expense">{rootError}</p>}
+                  {unverifiedEmail &&
+                    (resendNotice ? (
+                      <p className="text-[13px] text-income">{resendNotice}</p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void resendVerification(unverifiedEmail)}
+                        className="self-start text-[13px] font-medium text-foreground underline underline-offset-4"
+                      >
+                        {t('Verify_resend')}
+                      </button>
+                    ))}
+
+                  <Button type="submit" size="lg" className="mt-1 w-full" disabled={isSubmitting}>
+                    {t(isLogin ? 'Login' : 'Register_submit')}
+                  </Button>
+
+                  <div className="flex items-center gap-3 py-1">
+                    <Separator className="flex-1 bg-stone-300" />
+                    <span className="text-[11px] tracking-wide text-muted-foreground uppercase">
+                      {t('or')}
+                    </span>
+                    <Separator className="flex-1 bg-stone-300" />
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="w-full border-stone-300"
+                  >
+                    <GoogleGlyph /> {t('Continue with Google')}
+                  </Button>
+                </form>
+
+                <p className="mt-7 text-center text-sm text-muted-foreground">
+                  {t(isLogin ? "Don't have an account?" : 'Already have an account?')}{' '}
+                  <button
+                    type="button"
+                    onClick={toggleMode}
+                    className="font-medium text-foreground underline-offset-4 hover:underline"
+                  >
+                    {t(isLogin ? 'Sign up' : 'Sign in')}
+                  </button>
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -174,7 +262,8 @@ export default function LoginPage() {
         />
         <div className="relative z-10 flex w-full flex-col justify-center px-14">
           <span className="mb-5 inline-flex w-fit items-center rounded-full border border-border bg-background/60 px-2.5 text-[11px] font-medium backdrop-blur">
-            <span className="rounded-full animate-pulse bg-green-600 size-3"></span><span className="size-1.5 rounded-full bg-brand" /> {t('Auth_badge')}
+            <span className="rounded-full animate-pulse bg-green-600 size-3"></span>
+            <span className="size-1.5 rounded-full bg-brand" /> {t('Auth_badge')}
           </span>
           <h2 className="max-w-sm text-[28px] leading-tight font-semibold tracking-tight">
             {t('Auth_headline')}
@@ -182,7 +271,9 @@ export default function LoginPage() {
           <p className="mt-3 max-w-sm text-[15px] text-muted-foreground">{t('Auth_subcopy')}</p>
 
           <div className="mt-8 max-w-sm rounded-xl border border-border bg-card/80 p-5 shadow-sm backdrop-blur">
-            <p className="text-[12px] font-medium text-muted-foreground">{t('Auth_teaser_label')}</p>
+            <p className="text-[12px] font-medium text-muted-foreground">
+              {t('Auth_teaser_label')}
+            </p>
             <p className="mt-1 font-mono text-[34px] font-semibold tracking-tight tabular-nums text-income">
               +1.498 €
             </p>
