@@ -3,7 +3,12 @@ import { createDocument } from 'zod-openapi';
 
 // Request schemas — imported from the route modules so the docs stay in sync
 // with the actual Zod validation (single source of truth).
-import { loginSchema, registerSchema } from '../routes/auth/auth.schemas.js';
+import {
+  loginSchema,
+  registerSchema,
+  verifyEmailSchema,
+  resendVerificationSchema,
+} from '../routes/auth/auth.schemas.js';
 import { createAccountSchema, updateAccountSchema } from '../routes/accounts/accounts.schemas.js';
 import {
   createExpenseSchema,
@@ -89,10 +94,17 @@ export const openApiDocument = createDocument({
         tags: ['Auth'],
         summary: 'Register a new user',
         security: [],
+        description:
+          'Creates the account and emails a verification link. No JWT is issued: ' +
+          'the user cannot log in until the link is opened.',
         requestBody: json(registerSchema),
         responses: {
-          '201': { description: 'User created, returns JWT', ...json(tokenSchema) },
-          '400': { description: 'Validation error / email already used', ...errorRef },
+          '201': {
+            description: 'User created, verification email sent',
+            ...json(z.object({ message: z.string() })),
+          },
+          '400': { description: 'Validation error', ...errorRef },
+          '409': { description: 'Email already used', ...errorRef },
         },
       },
     },
@@ -105,6 +117,36 @@ export const openApiDocument = createDocument({
         responses: {
           '200': { description: 'Authenticated, returns JWT', ...json(tokenSchema) },
           '401': { description: 'Invalid credentials', ...errorRef },
+          '403': { description: 'Email not verified yet', ...errorRef },
+        },
+      },
+    },
+    '/auth/verify-email': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Confirm an email address with the token from the link',
+        security: [],
+        requestBody: json(verifyEmailSchema),
+        responses: {
+          '200': { description: 'Email verified, returns JWT', ...json(tokenSchema) },
+          '400': { description: 'Token invalid, already used or expired', ...errorRef },
+        },
+      },
+    },
+    '/auth/resend-verification': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Send a new verification link',
+        description:
+          'Always answers 200 with a generic message so registered addresses cannot be enumerated.',
+        security: [],
+        requestBody: json(resendVerificationSchema),
+        responses: {
+          '200': {
+            description: 'Generic acknowledgement',
+            ...json(z.object({ message: z.string() })),
+          },
+          '400': { description: 'Validation error', ...errorRef },
         },
       },
     },
