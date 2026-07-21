@@ -28,6 +28,8 @@ proyectado de cada cuenta y el desglose de gastos por categoría.
 ## Características principales
 
 - Autenticación JWT con registro e inicio de sesión y dos roles (`admin`, `user`).
+- Verificación de correo obligatoria: el registro no devuelve token y el acceso queda
+  bloqueado hasta abrir el enlace enviado por email.
 - Cuentas de tipo banco o efectivo, con saldo actual y divisa.
 - Gastos con estado `pending` / `paid`; marcar un gasto como pagado deduce el importe del
   saldo de la cuenta asociada.
@@ -135,7 +137,7 @@ cabecera `Authorization: Bearer <token>`.
 
 | Recurso | Endpoints | Notas |
 | --- | --- | --- |
-| Auth | `POST /auth/register`, `POST /auth/login` | Públicos; devuelven `{ token }`. |
+| Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/verify-email`, `POST /auth/resend-verification` | Públicos. `login` y `verify-email` devuelven `{ token }`; `register` solo un mensaje (ver verificación de correo). |
 | Accounts | `GET /accounts`, `POST /accounts`, `GET /accounts/:id`, `PATCH /accounts/:id` | CRUD de cuentas. |
 | Expenses | `GET /expenses`, `POST /expenses`, `GET /expenses/:id`, `PATCH /expenses/:id`, `PATCH /expenses/:id/paid` | `:id/paid` marca pagado y deduce del saldo. |
 | Recurring rules | `GET /recurring-rules`, `POST /recurring-rules`, `POST /recurring-rules/generate`, `GET /recurring-rules/:id`, `PATCH /recurring-rules/:id`, `DELETE /recurring-rules/:id` | `generate` crea los gastos futuros de forma idempotente. |
@@ -190,6 +192,24 @@ pnpm dev:worker                                 # pnpm dev:worker
 En este modo la web (Vite) usa `VITE_API_URL` para apuntar a la API; en el despliegue Docker
 nginx hace de proxy y la web usa una baseURL relativa (sin CORS).
 
+## Verificación de correo
+
+El registro crea la cuenta pero **no** devuelve JWT: la API genera un token aleatorio de un
+solo uso (se guarda solo su hash SHA-256, con caducidad `EMAIL_VERIFICATION_TTL_HOURS`) y
+envía por SMTP un enlace a `${FRONTEND_URL}/verify-email?token=...`.
+
+1. `POST /auth/register` → 201 con un mensaje; el usuario ve la pantalla "revisa tu correo".
+2. `POST /auth/login` mientras tanto → 403 `EMAIL_NOT_VERIFIED`.
+3. Al abrir el enlace, la web llama a `POST /auth/verify-email`, la cuenta queda verificada y
+   se devuelve un JWT, de modo que el usuario entra directamente al dashboard.
+4. Si el enlace caduca o se pierde: `POST /auth/resend-verification`. Responde siempre 200 con
+   un mensaje genérico (no revela si el correo existe) y no reemite si ya se envió uno hace
+   menos de 60 segundos.
+
+En desarrollo los correos los captura Mailhog: abre http://localhost:8025 y pulsa el enlace
+desde ahí. Los usuarios del seeder y los que ya existían antes de esta funcionalidad se crean
+o migran como verificados, así que no necesitan pasar por el flujo.
+
 ## Variables de entorno
 
 Se cargan desde un único `.env` en la raíz (copia de `.env.example`, ignorado por git). En los
@@ -199,7 +219,7 @@ herramientas externas (DBeaver, etc.) usan `localhost:${POSTGRES_PORT}`.
 | Bloque | Variables | Por defecto / notas |
 | --- | --- | --- |
 | Postgres | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT` | `finflow` / `finflow` / `finflow` / `5432` |
-| API | `API_PORT`, `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `NODE_ENV` | `4000`; usa una cadena larga y aleatoria para `JWT_SECRET` en producción (`openssl rand -hex 32`); `JWT_EXPIRES_IN=1d` |
+| API | `API_PORT`, `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `NODE_ENV`, `EMAIL_VERIFICATION_TTL_HOURS` | `4000`; usa una cadena larga y aleatoria para `JWT_SECRET` en producción (`openssl rand -hex 32`); `JWT_EXPIRES_IN=1d`; el enlace de verificación caduca a las `EMAIL_VERIFICATION_TTL_HOURS=24` horas |
 | Frontend | `VITE_API_URL`, `FRONTEND_URL` | `VITE_API_URL` se deja sin definir en el despliegue Docker (nginx hace de proxy); `FRONTEND_URL` alimenta la lista de CORS de la API |
 | Worker | `KAFKA_BROKERS`, `KAFKA_CLIENT_ID`, `KAFKA_DUE_SOON_TOPIC`, `KAFKA_CONSUMER_GROUP`, `DUE_SOON_DAYS`, `DUE_SOON_CRON`, `RUN_SCAN_ON_BOOT`, `WORKER_METRICS_PORT` | Tema `expense.due_soon`; ventana de aviso `DUE_SOON_DAYS=3`; escaneo diario `0 8 * * *`; métricas en `9100` |
 | SMTP | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE`, `MAIL_FROM` | Por defecto apuntan a Mailhog (`localhost:1025`, sin auth/TLS); definir `SMTP_USER`+`SMTP_PASS` activa un proveedor real con TLS/STARTTLS |
