@@ -50,7 +50,7 @@ async function recreateUser(email: string, password: string) {
     .values({ email, passwordHash, emailVerifiedAt: new Date() })
     .returning();
   if (!created) throw new Error(`Failed to create user ${email}`);
-  console.log(`Created user ${email} / ${password}`);
+  console.log(`Created user ${email}`);
   return created;
 }
 
