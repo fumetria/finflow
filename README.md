@@ -1,9 +1,8 @@
 # finflow
 
-Aplicación de control financiero personal que sustituye a una hoja de cálculo de Excel.
+Aplicación de control financiero personal donde surge la idea para sustituir una hoja de cálculo de Excel de control financiero básico.
 Su función principal es **proyectar el saldo disponible de cada cuenta frente a los gastos
-pendientes en una fecha dada**, respondiendo a la pregunta de siempre: "cuánto me falta para
-cubrir los pagos que vienen".
+pendientes en una fecha dada**.
 
 Proyecto full-stack construido como pieza de portfolio: monorepo con API REST, frontend SPA,
 un worker de mensajería y toda la infraestructura orquestada con Docker Compose.
@@ -46,13 +45,14 @@ proyectado de cada cuenta y el desglose de gastos por categoría.
 - Observabilidad con métricas Prometheus y un dashboard de Grafana.
 - Documentación interactiva de la API con Swagger/OpenAPI, generada desde los esquemas Zod
   (una única fuente de verdad para validación y documentación).
-- Interfaz internacionalizada (español / inglés) y tema claro, oscuro o de sistema.
+- Interfaz internacionalizada (español / inglés / chino) y tema claro, oscuro o de sistema.
 - Sistema de iconos duotono propio: SVG inline coloreados con `currentColor`, sin librerías
   de iconos externas.
 
 ## Stack tecnológico
 
 **Frontend** (`web/`)
+
 - React 19 + Vite 8 + TypeScript
 - Tailwind CSS v4, shadcn/ui sobre Radix
 - Sistema de iconos duotono propio (SVG inline, sin dependencias externas)
@@ -64,6 +64,7 @@ proyectado de cada cuenta y el desglose de gastos por categoría.
 - Fuentes Geist Variable, Geist Mono e Inter
 
 **Backend** (`api/`)
+
 - Node 20 + Express 5 + TypeScript
 - Drizzle ORM sobre PostgreSQL 16
 - Autenticación JWT (`jsonwebtoken`) y hashing con `bcryptjs`
@@ -72,12 +73,14 @@ proyectado de cada cuenta y el desglose de gastos por categoría.
 - Métricas con `prom-client`
 
 **Worker** (`worker/`)
+
 - KafkaJS (consumidor y productor)
 - node-cron para el escaneo diario
 - Nodemailer para el envío de emails
 - Drizzle ORM (reutiliza el esquema de la API) y `prom-client`
 
 **Infraestructura y tooling**
+
 - Docker Compose
 - Apache Kafka en modo KRaft (nodo único, sin Zookeeper)
 - Mailhog (SMTP falso en desarrollo)
@@ -98,14 +101,18 @@ ops/      Configuración de Prometheus y Grafana        (no es un paquete Node)
 
 Flujo general de los servicios:
 
-```
-navegador -> web (nginx) --/api--> api -> postgres
-                                    |
-                    escaneo diario / gastos "due soon"
-                                    v
-                                  kafka -> worker -> email (mailhog / SMTP real)
+```mermaid
+flowchart LR
+    navegador([navegador]) --> web["web (nginx)"]
+    web -- /api --> api[api]
+    api --> postgres[(postgres)]
+    api -->|escaneo diario / gastos due soon| kafka{{kafka}}
+    kafka --> worker[worker]
+    worker --> email["email (mailhog / SMTP real)"]
 
-api + worker --/metrics--> prometheus -> grafana
+    api -- /metrics --> prometheus[prometheus]
+    worker -- /metrics --> prometheus
+    prometheus --> grafana[grafana]
 ```
 
 El workspace `worker` depende de `@finflow/api` (`workspace:*`) para reutilizar el esquema de
@@ -135,24 +142,24 @@ aislamiento de datos.
 Base URL: `/api/v1`. Todos los endpoints, salvo `/auth/*` y los de infraestructura, exigen la
 cabecera `Authorization: Bearer <token>`.
 
-| Recurso | Endpoints | Notas |
-| --- | --- | --- |
-| Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/verify-email`, `POST /auth/resend-verification` | Públicos. `login` y `verify-email` devuelven `{ token }`; `register` solo un mensaje (ver verificación de correo). |
-| Accounts | `GET /accounts`, `POST /accounts`, `GET /accounts/:id`, `PATCH /accounts/:id` | CRUD de cuentas. |
-| Expenses | `GET /expenses`, `POST /expenses`, `GET /expenses/:id`, `PATCH /expenses/:id`, `PATCH /expenses/:id/paid` | `:id/paid` marca pagado y deduce del saldo. |
-| Recurring rules | `GET /recurring-rules`, `POST /recurring-rules`, `POST /recurring-rules/generate`, `GET /recurring-rules/:id`, `PATCH /recurring-rules/:id`, `DELETE /recurring-rules/:id` | `generate` crea los gastos futuros de forma idempotente. |
-| Forecast | `GET /forecast?date=...` | Saldo proyectado por cuenta frente a los gastos pendientes hasta la fecha. |
-| Loans | `GET /loans`, `POST /loans`, `POST /loans/materialize`, `GET /loans/:id`, `PATCH /loans/:id` | `POST /loans` persiste la tabla de amortización; `materialize` convierte cuotas vencidas en gastos. |
-| Categories | `GET /expenses-categories`, `GET /expenses-categories/:id`, `POST /expenses-categories`, `PATCH /expenses-categories/:id`, `DELETE /expenses-categories/:id` | CRUD de categorías. |
+| Recurso         | Endpoints                                                                                                                                                                  | Notas                                                                                                              |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Auth            | `POST /auth/register`, `POST /auth/login`, `POST /auth/verify-email`, `POST /auth/resend-verification`                                                                     | Públicos. `login` y `verify-email` devuelven `{ token }`; `register` solo un mensaje (ver verificación de correo). |
+| Accounts        | `GET /accounts`, `POST /accounts`, `GET /accounts/:id`, `PATCH /accounts/:id`                                                                                              | CRUD de cuentas.                                                                                                   |
+| Expenses        | `GET /expenses`, `POST /expenses`, `GET /expenses/:id`, `PATCH /expenses/:id`, `PATCH /expenses/:id/paid`                                                                  | `:id/paid` marca pagado y deduce del saldo.                                                                        |
+| Recurring rules | `GET /recurring-rules`, `POST /recurring-rules`, `POST /recurring-rules/generate`, `GET /recurring-rules/:id`, `PATCH /recurring-rules/:id`, `DELETE /recurring-rules/:id` | `generate` crea los gastos futuros de forma idempotente.                                                           |
+| Forecast        | `GET /forecast?date=...`                                                                                                                                                   | Saldo proyectado por cuenta frente a los gastos pendientes hasta la fecha.                                         |
+| Loans           | `GET /loans`, `POST /loans`, `POST /loans/materialize`, `GET /loans/:id`, `PATCH /loans/:id`                                                                               | `POST /loans` persiste la tabla de amortización; `materialize` convierte cuotas vencidas en gastos.                |
+| Categories      | `GET /expenses-categories`, `GET /expenses-categories/:id`, `POST /expenses-categories`, `PATCH /expenses-categories/:id`, `DELETE /expenses-categories/:id`               | CRUD de categorías.                                                                                                |
 
 Endpoints de infraestructura:
 
-| Endpoint | Descripción |
-| --- | --- |
-| `GET /health` | Comprueba la conexión a la base de datos (`SELECT 1`). |
-| `GET /metrics` | Métricas Prometheus de la API. |
-| `GET /api/v1/docs` | Swagger UI interactivo. |
-| `GET /api/v1/docs/openapi.json` | Especificación OpenAPI 3.1 en crudo. |
+| Endpoint                        | Descripción                                            |
+| ------------------------------- | ------------------------------------------------------ |
+| `GET /health`                   | Comprueba la conexión a la base de datos (`SELECT 1`). |
+| `GET /metrics`                  | Métricas Prometheus de la API.                         |
+| `GET /api/v1/docs`              | Swagger UI interactivo.                                |
+| `GET /api/v1/docs/openapi.json` | Especificación OpenAPI 3.1 en crudo.                   |
 
 ## Puesta en marcha
 
@@ -169,14 +176,14 @@ docker compose up -d
 El servicio `migrate` aplica las migraciones de Drizzle automáticamente y la API espera a que
 termine antes de arrancar. Una vez levantado:
 
-| Servicio | URL |
-| --- | --- |
-| Web (SPA) | http://localhost:8080 |
-| API | http://localhost:4000 |
-| Swagger UI | http://localhost:4000/api/v1/docs |
-| Mailhog (emails) | http://localhost:8025 |
-| Prometheus | http://localhost:9090 |
-| Grafana (admin / admin) | http://localhost:3001 |
+| Servicio                | URL                               |
+| ----------------------- | --------------------------------- |
+| Web (SPA)               | http://localhost:8080             |
+| API                     | http://localhost:4000             |
+| Swagger UI              | http://localhost:4000/api/v1/docs |
+| Mailhog (emails)        | http://localhost:8025             |
+| Prometheus              | http://localhost:9090             |
+| Grafana (admin / admin) | http://localhost:3001             |
 
 ### Opción B — Desarrollo local por workspace
 
@@ -215,13 +222,13 @@ o migran como verificados, así que no necesitan pasar por el flujo.
 Todas las plantillas viven en una única carpeta, `api/src/emails/`, y se consumen desde la api
 y desde el worker vía el subpath `@finflow/api/emails`:
 
-| Fichero | Qué es |
-| --- | --- |
-| `layout.ts` | Shell HTML compartido: tokens de marca, cabecera teal con logo, footer, `escapeHtml`, `detailRow`, `button`. |
-| `verification.ts` | Confirmación de cuenta. |
-| `dueSoon.ts` | Aviso de pago próximo a vencer. |
-| `index.ts` | Punto de entrada del subpath; re-exporta cada plantilla. |
-| `assets/` | Logo (`logo.svg` como fuente, `logo@2x.png` es el que se adjunta por CID). |
+| Fichero           | Qué es                                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| `layout.ts`       | Shell HTML compartido: tokens de marca, cabecera teal con logo, footer, `escapeHtml`, `detailRow`, `button`. |
+| `verification.ts` | Confirmación de cuenta.                                                                                      |
+| `dueSoon.ts`      | Aviso de pago próximo a vencer.                                                                              |
+| `index.ts`        | Punto de entrada del subpath; re-exporta cada plantilla.                                                     |
+| `assets/`         | Logo (`logo.svg` como fuente, `logo@2x.png` es el que se adjunta por CID).                                   |
 
 Cada plantilla exporta un `build*Email(...)` que devuelve `{ subject, text, html, attachments }`,
 listo para hacer spread en `sendMail`. Los mailers (`api/src/lib/mailer.ts`,
@@ -236,13 +243,13 @@ Se cargan desde un único `.env` en la raíz (copia de `.env.example`, ignorado 
 contenedores la API se conecta a Postgres por la red interna de Docker (`postgres:5432`); las
 herramientas externas (DBeaver, etc.) usan `localhost:${POSTGRES_PORT}`.
 
-| Bloque | Variables | Por defecto / notas |
-| --- | --- | --- |
-| Postgres | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT` | `finflow` / `finflow` / `finflow` / `5432` |
-| API | `API_PORT`, `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `NODE_ENV`, `EMAIL_VERIFICATION_TTL_HOURS` | `4000`; usa una cadena larga y aleatoria para `JWT_SECRET` en producción (`openssl rand -hex 32`); `JWT_EXPIRES_IN=1d`; el enlace de verificación caduca a las `EMAIL_VERIFICATION_TTL_HOURS=24` horas |
-| Frontend | `VITE_API_URL`, `FRONTEND_URL` | `VITE_API_URL` se deja sin definir en el despliegue Docker (nginx hace de proxy); `FRONTEND_URL` alimenta la lista de CORS de la API |
-| Worker | `KAFKA_BROKERS`, `KAFKA_CLIENT_ID`, `KAFKA_DUE_SOON_TOPIC`, `KAFKA_CONSUMER_GROUP`, `DUE_SOON_DAYS`, `DUE_SOON_CRON`, `RUN_SCAN_ON_BOOT`, `WORKER_METRICS_PORT` | Tema `expense.due_soon`; ventana de aviso `DUE_SOON_DAYS=3`; escaneo diario `0 8 * * *`; métricas en `9100` |
-| SMTP | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE`, `MAIL_FROM` | Por defecto apuntan a Mailhog (`localhost:1025`, sin auth/TLS); definir `SMTP_USER`+`SMTP_PASS` activa un proveedor real con TLS/STARTTLS |
+| Bloque   | Variables                                                                                                                                                       | Por defecto / notas                                                                                                                                                                                    |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Postgres | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`                                                                                            | `finflow` / `finflow` / `finflow` / `5432`                                                                                                                                                             |
+| API      | `API_PORT`, `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `NODE_ENV`, `EMAIL_VERIFICATION_TTL_HOURS`                                                          | `4000`; usa una cadena larga y aleatoria para `JWT_SECRET` en producción (`openssl rand -hex 32`); `JWT_EXPIRES_IN=1d`; el enlace de verificación caduca a las `EMAIL_VERIFICATION_TTL_HOURS=24` horas |
+| Frontend | `VITE_API_URL`, `FRONTEND_URL`                                                                                                                                  | `VITE_API_URL` se deja sin definir en el despliegue Docker (nginx hace de proxy); `FRONTEND_URL` alimenta la lista de CORS de la API                                                                   |
+| Worker   | `KAFKA_BROKERS`, `KAFKA_CLIENT_ID`, `KAFKA_DUE_SOON_TOPIC`, `KAFKA_CONSUMER_GROUP`, `DUE_SOON_DAYS`, `DUE_SOON_CRON`, `RUN_SCAN_ON_BOOT`, `WORKER_METRICS_PORT` | Tema `expense.due_soon`; ventana de aviso `DUE_SOON_DAYS=3`; escaneo diario `0 8 * * *`; métricas en `9100`                                                                                            |
+| SMTP     | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE`, `MAIL_FROM`                                                                                  | Por defecto apuntan a Mailhog (`localhost:1025`, sin auth/TLS); definir `SMTP_USER`+`SMTP_PASS` activa un proveedor real con TLS/STARTTLS                                                              |
 
 ## Base de datos y migraciones
 
@@ -273,10 +280,10 @@ pnpm --filter @finflow/api db:seed
 
 El seeder crea dos usuarios y coge sus credenciales del `.env`:
 
-| Variables                                 | Por defecto                     | Datos                        |
-| ----------------------------------------- | ------------------------------- | ---------------------------- |
-| `SEED_DEMO_EMAIL` / `SEED_DEMO_PASSWORD`  | `demo@finflow.app` / `Demo1234!`  | dataset completo de la demo  |
-| `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`| `admin@finflow.app` / `Admin1234!`| ninguno (solo login)         |
+| Variables                                  | Por defecto                        | Datos                       |
+| ------------------------------------------ | ---------------------------------- | --------------------------- |
+| `SEED_DEMO_EMAIL` / `SEED_DEMO_PASSWORD`   | `demo@finflow.app` / `Demo1234!`   | dataset completo de la demo |
+| `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | `admin@finflow.app` / `Admin1234!` | ninguno (solo login)        |
 
 El usuario "admin" es de momento un usuario normal: no tiene rol `admin` ni
 funcionalidad propia, solo email y contraseña.
@@ -316,7 +323,7 @@ iconos externa. Cada glifo es un SVG con dos capas (`.primary` y `.secondary`) q
 el color de texto actual, de modo que las utilidades `text-*` de Tailwind tiñen los iconos
 como a cualquier SVG inline.
 
-- **Fuente**: los SVG originales viven en `extra/icons/` (unos 200 iconos), junto a
+- **Fuente**: los SVG originales en `extra/icons/` (unos 200 iconos), junto a
   `extra/icons/icons-data.js` (agregado autogenerado) y un `index.html` de previsualización.
 - **Generación**: de ahí se genera `web/src/components/icon/icons.gen.ts`, que exporta el
   mapa `ICON_PATHS` y el tipo `IconName` (unión de todos los nombres disponibles). Es un
@@ -334,7 +341,7 @@ Uso típico:
 ```tsx
 import { Icon } from '@/components/icon/Icon';
 
-<Icon name="wallet" size={20} className="text-brand" title="Cuentas" />
+<Icon name="wallet" size={20} className="text-brand" title="Cuentas" />;
 ```
 
 ## Observabilidad
@@ -360,23 +367,3 @@ pnpm lint           # ESLint en todos los workspaces
 pnpm typecheck      # comprobación de tipos en todos los workspaces
 pnpm format         # Prettier sobre todo el repo
 ```
-
-## Roadmap
-
-El proyecto se construyó por fases, todas completadas:
-
-- **Fase 1 (completada)** — Autenticación, CRUD de cuentas y gastos, y marcar como pagado.
-- **Fase 2 (completada)** — Reglas recurrentes, servicio de previsión y dashboard de
-  proyección.
-- **Fase 3 (completada)** — Préstamos con tabla de amortización.
-- **Fase 4 (completada)** — Kafka (notificaciones de vencimiento próximo), Prometheus y
-  Grafana.
-
-Además, todo el stack está dockerizado y verificado de extremo a extremo con
-`docker compose up`.
-
-## Notas
-
-Proyecto de portfolio. Todavía no incluye una suite de tests automatizados. Para poblar la
-app con datos de ejemplo existe un script de seed (`pnpm --filter @finflow/api db:seed`); ver
-la sección "Datos de demostración (seed)".
